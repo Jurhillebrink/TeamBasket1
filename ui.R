@@ -148,7 +148,7 @@ dashboardUI <<- fluidPage(
                                numericInput(
                                  "succeed",
                                  label = NULL,
-                                 value = 0,
+                                 value = 10,
                                  min = 0,
                                  max = NA
                                )
@@ -595,7 +595,6 @@ dashboardUI <<- fluidPage(
                         "teamSelected",
                         "Team",
                         choices = allTeams$teamcode,
-                        #choices = allPlayerChoices,
                         multiple = FALSE,
                         options = list(
                           placeholder = 'Click here if you want to select a whole team',
@@ -700,7 +699,7 @@ dashboardUI <<- fluidPage(
                                numericInput(
                                  "succeed",
                                  label = NULL,
-                                 value = 0,
+                                 value = 8,
                                  min = 0,
                                  max = NA
                                )

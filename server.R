@@ -8,6 +8,7 @@
 #    http://shiny.rstudio.com/
 #
 
+library(dplyr)
 library(shiny)
 library(shinyjs)
 library(shinydashboard)
@@ -15,7 +16,7 @@ library(ggplot2)
 library(openssl)
 library(shinyjs) #to hide side bar
 library(grid) # for rastergrob, to set court as background of plot
-library(plyr)
+
 
 require("DT")
 
@@ -50,6 +51,7 @@ shinyServer(function(input, output, session) {
   # is TRUE, then display a message that the previous value was invalid.
   dataModal <- function(failed = FALSE) {
     modalDialog(
+      img(src='logo.jpg', align = "right", width = 160),
       textInput("uiUsername", "Username:"),
       passwordInput("uiPassword", "Password:"),
       textOutput('warning'),
@@ -131,8 +133,10 @@ shinyServer(function(input, output, session) {
   
   #Buttons for plus minus
   observeEvent(input$total_minus, {
-    new <- input$total - 1
-    updateNumericInput(session, "total", value = new)
+    if(input$total > 0){ 
+      new <- input$total - 1
+      updateNumericInput(session, "total", value = new)
+    }
   })
   
   observeEvent(input$total_plus, {
@@ -141,13 +145,17 @@ shinyServer(function(input, output, session) {
   })
   
   observeEvent(input$succeed_minus, {
-    new <- input$succeed - 1
-    updateNumericInput(session, "succeed", value = new)
+    if(input$succeed > 0){
+      new <- input$succeed - 1
+      updateNumericInput(session, "succeed", value = new)
+    }
   })
   
   observeEvent(input$succeed_plus, {
-    new <- input$succeed + 1
-    updateNumericInput(session, "succeed", value = new)
+    if(input$succeed < input$total){
+      new <- input$succeed + 1
+      updateNumericInput(session, "succeed", value = new)
+    }
   })
   
   ################################################################################
@@ -376,6 +384,17 @@ shinyServer(function(input, output, session) {
   #Hide the modal
   observeEvent(input$cancelEnd, {
     removeModal()
+  })
+  
+  #show players when a team is selected
+  observeEvent(input$teamSelected,{
+    result <- subset(allTeams, teamcode == input$teamSelected)
+    if(!empty(result)){
+      result <- allPlayers%>%
+        select(accountid, teamid) %>%
+        filter(teamid == as.numeric(result["teamid"]))
+      updateSelectizeInput(session, "playersInEvent", selected = setNames(as.numeric(result$accountid), result$accountid))
+    }
   })
   
   # refresh the player list in a event
