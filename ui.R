@@ -744,7 +744,8 @@ dashboardUI <<- fluidPage(
                       ),
                       
                       selectInput("shotAnalyseShotType", "Type of shot",
-                                  c("free_throw", "catch_shoot", "dribble"))
+                                 
+                      setNames(c("free_throw","catch_shoot","dribble"),c("Free throw", "Catch & Shoot", "From dribble")))
                     ), #end of box
                     #the bar chart
                     box(width = 12,
@@ -782,7 +783,7 @@ dashboardUI <<- fluidPage(
                     
                     
                     selectInput("shotAnalyse2ShotType", "Type of shot",
-                                c("free_throw", "catch_shoot", "dribble"))
+                                setNames(c("free_throw","catch_shoot","dribble"),c("Free throw", "Catch & Shoot", "From dribble")))
                   ), #end of box
                     #the bar chart
                     box(width = 12,
