@@ -13,14 +13,3 @@
                       background-color: #F07D00;
                     }
 
-.box.box-solid.box-primary>.box-header {
-  color: #F07D00;
-  background: #F07D00;
-                    }
-
-.box.box-solid.box-primary{
-  border-bottom-color: #F07D00;
-  border-left-color: #F07D00;
-  border-right-color: #F07D00;
-  border-top-color: #F07D00;
-}

@@ -1,4 +1,5 @@
 
+
 #
 # This is the user-interface definition of a Shiny web application. You can
 # run the application by clicking 'Run App' above.
@@ -148,7 +149,7 @@ dashboardUI <<- fluidPage(
                                numericInput(
                                  "succeed",
                                  label = NULL,
-                                 value = 0,
+                                 value = 10,
                                  min = 0,
                                  max = NA
                                )
@@ -595,7 +596,6 @@ dashboardUI <<- fluidPage(
                         "teamSelected",
                         "Team",
                         choices = allTeams$teamcode,
-                        #choices = allPlayerChoices,
                         multiple = FALSE,
                         options = list(
                           placeholder = 'Click here if you want to select a whole team',
@@ -700,7 +700,7 @@ dashboardUI <<- fluidPage(
                                numericInput(
                                  "succeed",
                                  label = NULL,
-                                 value = 0,
+                                 value = 8,
                                  min = 0,
                                  max = NA
                                )
@@ -744,8 +744,7 @@ dashboardUI <<- fluidPage(
                       ),
                       
                       selectInput("shotAnalyseShotType", "Type of shot",
-                                 
-                      setNames(c("free_throw","catch_shoot","dribble"),c("Free throw", "Catch & Shoot", "From dribble")))
+                                  setNames(c("free_throw","catch_shoot","dribble"),c("Free throw", "Catch & Shoot", "From dribble")))
                     ), #end of box
                     #the bar chart
                     box(width = 12,
@@ -1093,4 +1092,4 @@ playerHomeLayout <<- function(user){
 renderTrainingSelector <<- function(x){
   return(selectInput("trainingselector", "Training", x, selected = 1))
 
-}
+  }
