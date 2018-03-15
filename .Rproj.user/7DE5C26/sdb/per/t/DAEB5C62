@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "#connect to MySQL\n\nlibrary(RJDBC)\nlibrary(RODBC)\nlibrary(DBI)\nlibrary(shinythemes)\nlibrary(shinydashboard)\nlibrary(plyr)\n\noptions(java.parameters = \"-Xmx2g\")\n\n#drv <- JDBC(\"com.microsoft.sqlserver.jdbc.SQLServerDriver\", \"./opt/sqljdbc/sqljdbc4-2.0.jar\")\ndrv <- JDBC(\"com.microsoft.sqlserver.jdbc.SQLServerDriver\", \"C:/999 DB/20 Mijn MSSQLserver/sqljdbc4-2.0.jar\")\nconn <- dbConnect(drv, \"jdbc:sqlserver://145.92.162.226;databaseName=ztrieruc001;user=trieruc001;password=TTBGPfqU6gsOJG\")\n\n#positions\npositionsAll       <- c(1:14)\npositionsLeft      <- c(1, 2, 3, 7, 8, 12)\npositionsRight     <- c(4, 5, 6, 9, 10, 14)\npositionsCenter    <- c(3, 4, 8, 9, 11, 13)\npositionsInCircle  <- c(2, 3, 4, 5, 7, 8, 9, 10, 11)\npositionsOutCircle <- c(1, 6, 12, 13, 14)\nlocationX          <- c(4, 21, 41, 59, 79, 98, 21, 41, 59, 79, 50, 10, 50, 92)\nlocationY          <- c(77, 88, 88, 88, 88, 77, 50, 55, 55, 50, 25, 18, 3, 18)\n\ninEvent <<- FALSE\n\npositionLocations  <-\n  data.frame(positions = positionsAll, locationX, locationY)\n\nplayersInEvent <- ''\nlatestEventid  <- ''\n\n\ngetAllPlayers <- function(){\n  \n  query <- paste0(\n    \"exec GETPLAYERLIST\"\n  )\n  allPlayers <<- dbGetQuery(conn, query)\n  \n  allPlayers$fullname <<-\n    paste(allPlayers$firstname, allPlayers$lastname, sep = \" \")\n  #allPlayers <- data.frame(allPlayers$fullname, allPlayers$accountid)\n  allPlayerChoices <<-\n    setNames(as.numeric(allPlayers$accountid), allPlayers$fullname)\n  \n}\ngetAllPlayers()\n\n",
+    "created" : 1517563959662.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3308491818",
+    "id" : "DAEB5C62",
+    "lastKnownWriteTime" : 1517564300,
+    "last_content_update" : 1517564300930,
+    "path" : "C:/Users/poden/surfdrive/04 CTOBasketbal/basketball_1718/global.R",
+    "project_path" : "global.R",
+    "properties" : {
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

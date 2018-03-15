@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "required_packages = c(\n  \"shiny\",\n  \"readr\", \n  \"tidyr\", \n  \"stringr\", \n  \"dplyr\", \n  \"ggplot2\",\n  \"grid\",\n  \"jpeg\",\n  \"RCurl\",\n  \"DBI\",\n  \"png\",\n  \"data.table\",\n  \"mongolite\",\n  \"shinydashboard\",\n  \"shinyWidgets\",\n  \"shinythemes\",\n  \"plotly\",\n  \"markdown\",\n  \"shinyjs\",\n  \"RJDBC\",\n  \"RODBC\",\n  \"openssl\",\n  \"V8\",\n  \"DT\",\n  \"shinyWidgets\",\n  \n  #optional\n  \"hexbin\",\n  \"httr\",\n  \"jsonlite\"\n)\n\n\npackages_to_install = required_packages[!(required_packages %in% installed.packages()[, 1])]\n\nif (length(packages_to_install) > 0) {\n  install.packages(packages_to_install, repos = \"https://cran.rstudio.com\")\n}\n\n",
+    "created" : 1517564114887.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2746435729",
+    "id" : "CD3EED45",
+    "lastKnownWriteTime" : 1517469380,
+    "last_content_update" : 1517469380,
+    "path" : "C:/Users/poden/surfdrive/04 CTOBasketbal/basketball_1718/install_packages.R",
+    "project_path" : "install_packages.R",
+    "properties" : {
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

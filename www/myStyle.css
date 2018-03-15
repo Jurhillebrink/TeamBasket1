@@ -1,0 +1,26 @@
+/* logo */
+.skin-blue .main-header .logo {
+                      background-color: #F07D00;
+                      }
+
+/* logo when hovered */
+.skin-blue .main-header .logo:hover {
+                      background-color: #F07D00;
+                      }
+
+/* navbar (rest of the header) */
+.skin-blue .main-header .navbar {
+                      background-color: #F07D00;
+                    }
+
+.box.box-solid.box-primary>.box-header {
+  color: #F07D00;
+  background: #F07D00;
+                    }
+
+.box.box-solid.box-primary{
+  border-bottom-color: #F07D00;
+  border-left-color: #F07D00;
+  border-right-color: #F07D00;
+  border-top-color: #F07D00;
+}
