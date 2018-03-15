@@ -1,4 +1,5 @@
 
+
 #
 # This is the user-interface definition of a Shiny web application. You can
 # run the application by clicking 'Run App' above.
@@ -743,7 +744,7 @@ dashboardUI <<- fluidPage(
                       ),
                       
                       selectInput("shotAnalyseShotType", "Type of shot",
-                                  c("free_throw", "catch_shoot", "dribble"))
+                                  setNames(c("free_throw","catch_shoot","dribble"),c("Free throw", "Catch & Shoot", "From dribble")))
                     ), #end of box
                     #the bar chart
                     box(width = 12,
@@ -781,7 +782,7 @@ dashboardUI <<- fluidPage(
                     
                     
                     selectInput("shotAnalyse2ShotType", "Type of shot",
-                                c("free_throw", "catch_shoot", "dribble"))
+                                setNames(c("free_throw","catch_shoot","dribble"),c("Free throw", "Catch & Shoot", "From dribble")))
                   ), #end of box
                     #the bar chart
                     box(width = 12,
@@ -1091,4 +1092,4 @@ playerHomeLayout <<- function(user){
 renderTrainingSelector <<- function(x){
   return(selectInput("trainingselector", "Training", x, selected = 1))
 
-}
+  }
