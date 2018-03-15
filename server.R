@@ -50,6 +50,7 @@ shinyServer(function(input, output, session) {
   # is TRUE, then display a message that the previous value was invalid.
   dataModal <- function(failed = FALSE) {
     modalDialog(
+      img(src='logo.jpg', align = "right", width = 160),
       textInput("uiUsername", "Username:"),
       passwordInput("uiPassword", "Password:"),
       textOutput('warning'),
