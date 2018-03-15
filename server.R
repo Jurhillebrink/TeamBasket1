@@ -941,13 +941,19 @@ shinyServer(function(input, output, session) {
     output$shotAnalyse <- renderPlot({
       print(input$shotAnalyseDate)
       print(input$shotAnalyseShotType)
+      if(input$shotAnalyseShotType == "free_throw"){
+        position <- 0
+        updateSelectInput(session, "shotAnalysePosition", selected = 0)
+      } else{
+        position <- input$shotAnalysePosition
+      }
       ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
                           &
                             as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
                           &
                             as.Date(rsShotResult$startdate) >= input$shotAnalyseDate[1]
                           &
-                            rsShotResult$value3 == input$shotAnalysePosition
+                            rsShotResult$value3 == position
                           & 
                             rsShotResult$value4 == input$shotAnalyseShotType
                           , ],
