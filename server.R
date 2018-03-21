@@ -56,7 +56,18 @@ shinyServer(function(input, output, session) {
       passwordInput("uiPassword", "Password:"),
       textOutput('warning'),
       tags$head(tags$style("#warning{color: red;}")),
-      footer = tagList(actionButton("ok", "Login"))
+      footer = tagList(actionButton("forgotPass", "Forgot your password?", style = "float:left"), actionButton("ok", "Login"))
+    )
+  }
+  
+  dataModal1 <- function(failed = FALSE) {
+    modalDialog(
+      img(src='logo.jpg', align = "right", width = 100),
+      span("Enter your email and a new password will be sent."),
+      textInput("uiEmail", "Email:"),
+      textOutput('warningPassForgot'),
+      tags$head(tags$style("#warningPassForgot{color: red;}")),
+      footer = tagList(actionButton("back", "Back", style = "float:left"), actionButton("sendMail", "Send mail"))
     )
   }
   
@@ -64,6 +75,63 @@ shinyServer(function(input, output, session) {
   # This `observe` is suspended only whith right user credential
   obs1 <- observe({
     showModal(dataModal())
+  })
+  
+  #check if email is valid by regexp
+  isValidEmail <- function(x) {
+    grepl("\\<[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\>", as.character(x), 
+          ignore.case=TRUE)
+  }
+  
+  #send an email with new password if the mailaddres is correct
+  observeEvent(input$sendMail, {
+    if(isValidEmail(input$uiEmail)){ 
+      output$warningPassForgot <-
+        renderText({
+          paste("")
+        })
+      samp<-c(1:9,letters,LETTERS,"!")
+      newPass <- paste(sample(samp,8),collapse="")
+      
+      query <- paste0(
+        "exec GETACCOUNTWITHEMAIL
+        @email = ?email"
+      )
+      sql <- sqlInterpolate(conn, query, email = input$uiEmail)
+      rs <- dbGetQuery(conn, sql)
+      if(nrow(rs) == 1){
+        newPassEncrypt <- toString(sha256(toString(newPass), key = NULL))
+        query <- paste0(
+          "exec UPDATEPASSWORDS
+        @ACCOUNTID = ?accountid,
+        @PASSWORD = ?password,
+        @UNHASHEDPASSWORD = ?unhashedpassword"
+        )
+        sql <- sqlInterpolate(conn, query,
+                              accountid = rs,
+                              password = newPassEncrypt,
+                              unhashedpassword = newPass)
+        dbSendUpdate(conn, sql)
+        updateTextInput(session, "uiUsername", value = input$uiEmail)
+        removeModal()
+        showModal(dataModal())
+        send.mail(from = "passresetcto@gmail.com",
+                  to = input$uiEmail,
+                  subject = "Password reset",
+                  body = paste0("Hello,<br> You have requested a new password.<br><br>This is your new password: ", newPass, "<br><br>Kind regards"),
+                  smtp = list(host.name = "smtp.gmail.com", port = 465, user.name = "passresetcto@gmail.com", passwd = "z0ik3Rt9", ssl = TRUE), authenticate = TRUE,
+                  html = TRUE,
+                  send = TRUE
+      }else{
+        removeModal()
+        showModal(dataModal())
+      }
+    }else{
+      output$warningPassForgot <-
+        renderText({
+          paste("No valid email address!")
+        })
+    }
   })
   
   # When OK button is pressed, attempt to authenticate. If successful,
@@ -118,6 +186,19 @@ shinyServer(function(input, output, session) {
     }
     
   })
+  
+  #show forgot password modal
+  obs2 <- observe({
+    req(input$forgotPass)
+    showModal(dataModal1())
+  })  
+  
+  #back button in forgot password modal to login modal
+  obs3 <- observe({
+    req(input$back)
+    showModal(dataModal())
+  }) 
+  
   
   output$teammates <- renderDataTable(teammates)
   
