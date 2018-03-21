@@ -121,7 +121,7 @@ shinyServer(function(input, output, session) {
                   body = paste0("Hello,<br> You have requested a new password.<br><br>This is your new password: ", newPass, "<br><br>Kind regards"),
                   smtp = list(host.name = "smtp.gmail.com", port = 465, user.name = "passresetcto@gmail.com", passwd = "z0ik3Rt9", ssl = TRUE), authenticate = TRUE,
                   html = TRUE,
-                  send = TRUE
+                  send = TRUE)
       }else{
         removeModal()
         showModal(dataModal())
