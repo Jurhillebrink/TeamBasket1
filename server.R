@@ -738,7 +738,7 @@ shinyServer(function(input, output, session) {
           tags$div(
             style="margin-top:180%; bottom: 0; position: fixed;",
             menuItem(
-              img(src='logo op zwart.jpg', width = 230)
+              img(src='logo_final.png', width = 230)
             )
           )
         )
