@@ -1,14 +1,3 @@
-
-
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
 library(shiny)
 library(shinythemes)
 library(shinydashboard)
@@ -29,7 +18,7 @@ source("./global.R")
 #accountids <- rs$accountid
 #species <- data.frame(lastnames, accountids)
 #choicesSpecies <-
- # setNames(as.numeric(species$accountids), species$lastnames)
+#setNames(as.numeric(species$accountids), species$lastnames)
 
 
 dashboardUI <<- fluidPage(
@@ -39,7 +28,7 @@ dashboardUI <<- fluidPage(
   #the js scripts
   tags$head(tags$script(src = "mapster.js")),
   tags$head(tags$script(src = "script.js")),
-    dashboardPage(
+  dashboardPage(
       dashboardHeader(
         title = "CTO",
         tags$li(h5(""),
@@ -57,16 +46,36 @@ dashboardUI <<- fluidPage(
         tabItems(
           # select players for a session
           tabItem(tabName = "InvoerSchoten1",
-                  fluidPage(
-                  box(
-                    width = 6,
-                    selectizeInput(
-                      "playersInEvent",
-                      "Players",
-                      choices = allPlayerChoices,
-                      selected = allPlayers[1, "Playernames"],
-                      multiple = TRUE
-                    ),
+                  fluidRow(
+                    #input and filter options for the graph
+                    box(
+                      width = 6,
+                      selectizeInput(
+                        "teamSelected",
+                        "Team",
+                        choices = allTeams$teamcode,
+                        multiple = FALSE,
+                        options = list(
+                          placeholder = 'Click here if you want to select a whole team',
+                          onInitialize = I('function() { this.setValue(""); }')
+                        )
+                      ),
+                        selectizeInput(
+                          "playersInEvent",
+                          "Players",
+                          choices = allPlayerChoices,
+                          selected = allPlayers[1, "Playernames"],
+                          multiple = TRUE,
+                          options = list(
+                            placeholder = 'Or select individual players',
+                            onInitialize = I('function() { this.setValue(""); }')
+                          )
+                        ),
+                  
+                  
+                  
+                  
+                  
                     actionButton('switchtab', 'Start event')
                   ))),
           # the actual shot event page
@@ -82,8 +91,8 @@ dashboardUI <<- fluidPage(
                       radioGroupButtons(inputId = "typeselector", 
                                         label = "Type", 
                                         status = "danger",
-                                        choices = setNames(c("free_throw","catch_shoot","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
-                                        selected = "catch_shoot"),
+                                        choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
+                                        selected = "catch_throw"),
                       #map selector
                       img(
                         id = "fieldImage",
@@ -149,7 +158,7 @@ dashboardUI <<- fluidPage(
                                numericInput(
                                  "succeed",
                                  label = NULL,
-                                 value = 10,
+                                 value = 8,
                                  min = 0,
                                  max = NA
                                )
@@ -193,7 +202,7 @@ dashboardUI <<- fluidPage(
                       ),
                       
                       selectInput("shotAnalyseShotType", "Type of shot",
-                                  c("free_throw", "catch_shoot", "dribble"))
+                                  setNames(c("free_throw","catch_throw","dribble"),c("Free throw", "Catch & Shoot", "From dribble")))
                     ), #end of box
                     #the bar chart
                     box(width = 12,
@@ -231,7 +240,7 @@ dashboardUI <<- fluidPage(
                     
                     
                     selectInput("shotAnalyse2ShotType", "Type of shot",
-                                c("free_throw", "catch_shoot", "dribble"))
+                                setNames(c("free_throw","catch_throw","dribble"),c("Free throw", "Catch & Shoot", "From dribble")))
                   ), #end of box
                     #the bar chart
                     box(width = 12,
@@ -290,6 +299,7 @@ heatmapUiLayout <<- function(x){
 #Box to select a player in a public event
 publicEventUiLayout <<- function(x){
   return(
+    
     box(
       title = "Select Player",
       width = 4,
@@ -305,11 +315,20 @@ publicEventUiLayout <<- function(x){
         ,
         selected = as.numeric(x[1])
       ),
-      actionLink("refreshPlayers", icon("refresh")),# refresh the player list
+      selectizeInput(
+        "addPlayers",
+        "Select players to add",
+        choices = allPlayerChoices [! allPlayerChoices %in% as.numeric(playersInEvent)],
+        selected = allPlayers[1, "Playernames"],
+        multiple = TRUE
+      ),
+      actionButton('addPlayerInEvent', 'Add selected players'),
       hr(),
       # fluidRow(column(3, verbatimTextOutput("value")))
       actionButton("closeTestEvent", "End event")
-    )
+)
+      
+    
   )
 }
 
@@ -405,23 +424,23 @@ lastEventLayout <<- function(eventData, user){
       fluidRow(
         #list used positions
         box(
-          title = paste("Training",eventData[1,'startdate']),width = 3,
+          title = paste("Training",eventData[1,'startdate']),width = 3, background = "orange",
           "Positions: ", 
           paste(sort(unique(as.numeric(eventData$value3)), decreasing=FALSE), collapse=" ")
         ),
         #total amount of shots
         box(
-          title = "Total shots",width = 3, background = "red",
+          title = "Total made",width = 3, background = "orange",
           h2(sum(as.numeric(eventData$value)))
         ), 
         #total amount scored
         box(
-          title = "Shots made",width = 3, background = "red",
+          title = "Total Taken",width = 3, background = "orange",
           h2(sum(as.numeric(eventData$value2)))
         ), 
         #total percentage of the whole team
         box(
-          title = "Percentage",width = 3, background = "red",
+          title = "Percentage",width = 3, background = "orange",
           h2(
             paste(
               round((sum(as.numeric(eventData$value)) /sum(as.numeric(eventData$value2))*100),1)),"%") 
@@ -431,7 +450,7 @@ lastEventLayout <<- function(eventData, user){
       fluidRow(
         # choose a player
         box(
-          title = "Select player",width = 3, background = "red",
+          title = "Select player",width = 3, background = "orange",
           radioButtons("select_player_last_event", "",
                        choices=
                            unique(
@@ -448,8 +467,8 @@ lastEventLayout <<- function(eventData, user){
       fluidRow(
         # choose a position
         box(
-          title = "Pick position",width = 3, background = "red",
-          radioButtons("select_position_last_event", "",
+          title = "Pick position",width = 3, background = "orange",
+          radioButtons("select_position_last_event", "", 
                        choices=sort(
                          as.numeric(
                            unique(
@@ -530,4 +549,5 @@ playerHomeLayout <<- function(user){
 
 renderTrainingSelector <<- function(x){
   return(selectInput("trainingselector", "Training", x, selected = 1))
-}
+
+  }
