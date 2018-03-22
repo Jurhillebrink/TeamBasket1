@@ -734,8 +734,12 @@ shinyServer(function(input, output, session) {
               tabName = "shotAnalyse2",
               icon = icon("line-chart")
             )
-          ), menuItem(
-            img(src='logo op zwart.jpg', align = "right", width = 160)
+          ), 
+          tags$div(
+            style="margin-top:180%; bottom: 0; position: fixed;",
+            menuItem(
+              img(src='logo op zwart.jpg', width = 230)
+            )
           )
         )
       } else if (currentUser$role == "p") {
