@@ -24,6 +24,7 @@ required_packages = c(
   "V8",
   "DT",
   "shinyWidgets",
+  "mailR",
   
   #optional
   "hexbin",

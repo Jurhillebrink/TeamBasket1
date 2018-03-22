@@ -68,6 +68,7 @@ getAllTeams <- function(){
   )
   allTeams <<- dbGetQuery(conn, query)
 }
+
 getAllPlayers()
 getAllTeams()
 
