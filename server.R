@@ -730,9 +730,15 @@ shinyServer(function(input, output, session) {
               icon = icon("bar-chart")
             ),
             menuSubItem(
-              "Shot results 2",
+              "results 2",
               tabName = "shotAnalyse2",
               icon = icon("line-chart")
+            )
+          ), 
+          tags$div(
+            style="margin-top:180%; bottom: 0; position: fixed;",
+            menuItem(
+              img(src='logo_final.png', width = 230)
             )
           )
         )
