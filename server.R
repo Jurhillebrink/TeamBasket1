@@ -699,7 +699,12 @@ shinyServer(function(input, output, session) {
       if (currentUser$role == "a") {
         #User is an admin
         #Render the sidebar 
-        sidebarMenu(id = "tabs",
+        sidebarMenu(tags$div(
+          style="margin-top:180%; bottom: 0; position: fixed;",
+          menuItem(
+            img(src='logo_final.png', width = 230)
+          )
+        ),id = "tabs",
                     menuItem(
                       "Admin",
                       tabName = "admin",
@@ -756,6 +761,12 @@ shinyServer(function(input, output, session) {
           max(rsShotResult[currentUser$accountid == rsShotResult$accountid & rsShotResult$value != 0, ]$eventid, na.rm = TRUE)
         #Render the sidebar 
         sidebarMenu(
+          tags$div(
+            style="margin-top:180%; bottom: 0; position: fixed;",
+            menuItem(
+              img(src='logo_final.png', width = 230)
+            )
+          ),
           id = "tabs",
           menuItem(
             "Home",
@@ -1236,5 +1247,6 @@ shinyServer(function(input, output, session) {
     rsShotResult <<-
       rsShotResult[rsShotResult$percentage <= 100,]#filter only viable percentage
   }
+
 })
 
