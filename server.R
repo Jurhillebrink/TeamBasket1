@@ -16,7 +16,7 @@ library(ggplot2)
 library(openssl)
 library(shinyjs) #to hide side bar
 library(grid) # for rastergrob, to set court as background of plot
-
+library(mailR)
 
 require("DT")
 
