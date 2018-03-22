@@ -730,10 +730,12 @@ shinyServer(function(input, output, session) {
               icon = icon("bar-chart")
             ),
             menuSubItem(
-              "Shot results 2",
+              "results 2",
               tabName = "shotAnalyse2",
               icon = icon("line-chart")
             )
+          ), menuItem(
+            img(src='logo op zwart.jpg', align = "right", width = 160)
           )
         )
       } else if (currentUser$role == "p") {
