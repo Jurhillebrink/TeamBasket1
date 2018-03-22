@@ -1122,7 +1122,7 @@ shinyServer(function(input, output, session) {
         print(resultPerPosition)
         
         ggplot(resultPerPosition,
-               aes(x = eventid,
+               aes(x = eventdate,
                    #x = as.Date(
                    #      ISOdate(
                    #        substr(eventdate,1,4),
@@ -1133,7 +1133,7 @@ shinyServer(function(input, output, session) {
                    y = percentage)) +
           geom_line(aes(colour = as.character(accountid))) +
           geom_point(aes(colour = as.character(accountid))) +
-          xlab("eventid") +
+          xlab("eventdate") +
           scale_colour_manual(
             values = palette("default"),
             name = "Players",

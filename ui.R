@@ -206,8 +206,11 @@ dashboardUI <<- fluidPage(
                     ), #end of box
                     #the bar chart
                     box(width = 12,
-                        plotOutput("shotAnalyse"))
-                  )),
+                        plotOutput("shotAnalyse")
+                        )),
+                    box(width = 2, radioButtons("staafOfLijnShotAnalyse1", label = NULL,choices = list("Bar" = 1, "Line" = 2
+                    ),selected = 1, inline = TRUE), style = "float:left")
+                  ),
           tabItem(tabName = "shotAnalyse2",
                   fluidRow(
                     #input and filter options for the graph
