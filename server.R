@@ -965,27 +965,7 @@ shinyServer(function(input, output, session) {
     })
     
     output$shotAnalyse2 <- renderPlot({
-      requestedPositions <- c()
-      
-      # add the positions to the requested positions
-      if ("All" %in% input$shotAnalyse2Position) {
-        requestedPositions <- c(requestedPositions, positionsAll)
-      }
-      if ("Left" %in% input$shotAnalyse2Position)  {
-        requestedPositions <- c(requestedPositions, positionsLeft)
-      }
-      if ("Center" %in% input$shotAnalyse2Position) {
-        requestedPositions <- c(requestedPositions, positionsCenter)
-      }
-      if ("Right" %in% input$shotAnalyse2Position) {
-        requestedPositions <- c(requestedPositions, positionsRight)
-      }
-      if ("Inside circle" %in% input$shotAnalyse2Position) {
-        requestedPositions <- c(requestedPositions, positionsInCircle)
-      }
-      if ("Ouside Circle" %in% input$shotAnalyse2Position) {
-        requestedPositions <- c(requestedPositions, positionsOutCircle)
-      }
+  
       print(rsShotResult)
       #select positions
       resultsOfRequestedPositions <-
