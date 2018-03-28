@@ -558,7 +558,6 @@ shinyServer(function(input, output, session) {
     sql <- sqlInterpolate(conn, query,
                           eventid = latestEventid)
     dbSendUpdate(conn, sql)
-
     #Render the menu again, but select the last event tab.
     output$menu <- renderMenu({
       sidebarMenu(
@@ -587,6 +586,8 @@ shinyServer(function(input, output, session) {
     # show menu
     shinyjs::removeClass(selector = "body", class = "sidebar-collapse")
     removeModal()
+    getShotResults()
+    renderLastEvent()
   }
   
   ##############################################################
@@ -820,14 +821,12 @@ shinyServer(function(input, output, session) {
   renderLastEvent <- function(){
     # get the id of the last event
     query <- paste0(
-      "exec GETLASTEVENT"
+      "exec GETLASTDATE"
     )
     sql <- sqlInterpolate(conn, query)
-    latestEvent <- dbGetQuery(conn, sql)$eventid
+    latestDate <- dbGetQuery(conn, sql)$starttime
     
-    #latestEvent <- 401 #### REMOVE THIS LATER!!!!!!!! # this is done because there only is 1 legit event right now
-    
-    eventData <- rsShotResult[rsShotResult$eventid == latestEvent,] # select dtata of last event
+    eventData <- rsShotResult[rsShotResult$starttime == latestDate,] # select dtata of last date
     
     # render the page
     output$last_event_coach <- renderUI({
