@@ -478,10 +478,11 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  
+  
   # refresh the player list in a event
   observeEvent(input$refreshPlayers, {
     getAllPlayers()
-    print(paste("latest event: ", latestEventid))
     query <- paste0(
       "exec GETPLAYERSINEVENT 
       @EVENTID = ?eventid"
@@ -491,12 +492,29 @@ shinyServer(function(input, output, session) {
                           eventid = latestEventid)
     
     rs <- dbGetQuery(conn, sql)
-
+    
     playersInEvent <<- rs$accountid
     print(rs)
     renderPublicEvent()
     #session$reload()
     #shinyjs::reset("playerSelect")
+  })
+  
+  #add a player during an event
+  observeEvent(input$addPlayerInEvent, {
+    for (player in input$addPlayers){
+      query <- paste0(
+        "exec CREATEUSEREVENT 
+        @ACCOUNTID = ?accountid,
+        @EVENTID = ?eventid"
+      )
+      sql <- sqlInterpolate(conn, query, 
+                            accountid = player, 
+                            eventid = latestEventid)
+      dbSendUpdate(conn, sql)
+      playersInEvent <- append(playersInEvent, input$addPlayers)
+      renderPublicEvent()
+    }  
   })
   
   # to end a event
@@ -540,7 +558,6 @@ shinyServer(function(input, output, session) {
     sql <- sqlInterpolate(conn, query,
                           eventid = latestEventid)
     dbSendUpdate(conn, sql)
-
     #Render the menu again, but select the last event tab.
     output$menu <- renderMenu({
       sidebarMenu(
@@ -569,6 +586,8 @@ shinyServer(function(input, output, session) {
     # show menu
     shinyjs::removeClass(selector = "body", class = "sidebar-collapse")
     removeModal()
+    getShotResults()
+    renderLastEvent()
   }
   
   ##############################################################
@@ -676,6 +695,8 @@ shinyServer(function(input, output, session) {
     }
     
   })
+  
+  
   
   
   ##############################################################
@@ -800,14 +821,12 @@ shinyServer(function(input, output, session) {
   renderLastEvent <- function(){
     # get the id of the last event
     query <- paste0(
-      "exec GETLASTEVENT"
+      "exec GETLASTDATE"
     )
     sql <- sqlInterpolate(conn, query)
-    latestEvent <- dbGetQuery(conn, sql)$eventid
+    latestDate <- dbGetQuery(conn, sql)$starttime
     
-    #latestEvent <- 401 #### REMOVE THIS LATER!!!!!!!! # this is done because there only is 1 legit event right now
-    
-    eventData <- rsShotResult[rsShotResult$eventid == latestEvent,] # select dtata of last event
+    eventData <- rsShotResult[rsShotResult$starttime == latestDate,] # select dtata of last date
     
     # render the page
     output$last_event_coach <- renderUI({
@@ -1005,12 +1024,15 @@ shinyServer(function(input, output, session) {
     sql <- sqlInterpolate(conn, query)
     result <- dbGetQuery(conn, sql)
     
-    print(result)
-    playersInEvent <<- result$accountid
-    x <- result$accountid
-    print(paste("playersInEvent", playersInEvent))
-    print(paste("allplayers filtered met x: ", allPlayers[allPlayers$accountid %in% x, ]$firstname))
-    print("---")
+    query <- paste0(
+      "exec GETPLAYERSINEVENT 
+      @EVENTID = ?eventid"
+    )
+    
+    sql <- sqlInterpolate(conn, query,
+                          eventid = result$eventid)
+    result <- dbGetQuery(conn, sql)
+    playersInEvent <<- as.numeric(result$accountid)
     output$public_event <- renderUI({
       publicEventUiLayout(playersInEvent)
     })
