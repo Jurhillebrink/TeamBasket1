@@ -562,11 +562,6 @@ shinyServer(function(input, output, session) {
             "Shot results",
             tabName = "shotAnalyse",
             icon = icon("bar-chart")
-          ),
-          menuSubItem(
-            "Shot results 2",
-            tabName = "shotAnalyse2",
-            icon = icon("line-chart")
           )
         )
       )
@@ -733,11 +728,6 @@ shinyServer(function(input, output, session) {
               "Shot results",
               tabName = "shotAnalyse",
               icon = icon("bar-chart")
-            ),
-            menuSubItem(
-              "results 2",
-              tabName = "shotAnalyse2",
-              icon = icon("line-chart")
             )
           ), 
           tags$div(
@@ -1036,6 +1026,7 @@ shinyServer(function(input, output, session) {
   # coach analysis
   renderAnalyses <- function(){
     # make plot
+
     output$shotAnalyse <- renderPlot({
       print(input$shotAnalyseDate)
       print(input$shotAnalyseShotType)
@@ -1045,6 +1036,25 @@ shinyServer(function(input, output, session) {
       } else{
         position <- input$shotAnalysePosition
       }
+             if(input$staafOfLijnShotAnalyse1 == 1){
+               ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
+                                   &
+                                     as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
+                                   &
+                                     as.Date(rsShotResult$startdate) >= input$shotAnalyseDate[1]
+                                   &
+                                     rsShotResult$value3 == position
+                                   & 
+                                     rsShotResult$value4 == input$shotAnalyseShotType
+                                   , ],
+             aes(x = starttime,
+                 y = percentage,
+                 fill = fullname)) +
+        geom_bar(stat = "identity", position = "dodge") +
+        labs(fill = 'Names')
+             }
+   
+    else {
       ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
                           &
                             as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
@@ -1055,94 +1065,19 @@ shinyServer(function(input, output, session) {
                           & 
                             rsShotResult$value4 == input$shotAnalyseShotType
                           , ],
-             aes(x = starttime,
-                 y = percentage,
-                 fill = fullname)) +
-        geom_bar(stat = "identity", position = "dodge") +
-        labs(fill = 'Names')
-    })
-    
-    output$shotAnalyse2 <- renderPlot({
-      requestedPositions <- c()
+             aes(x = strptime(starttime, format="%Y-%m-%d"),
+                 y = percentage)) +
+        geom_line(aes(colour = as.character(accountid))) +
+        geom_point(aes(colour = as.character(accountid))) +
+        xlab("starttime") +
+        scale_colour_manual(
+          values = palette("default"),
+          name = "Players",
+          breaks = rsShotResult$accountid
+        )     
       
-      # add the positions to the requested positions
-      if ("All" %in% input$shotAnalyse2Position) {
-        requestedPositions <- c(requestedPositions, positionsAll)
-      }
-      if ("Left" %in% input$shotAnalyse2Position)  {
-        requestedPositions <- c(requestedPositions, positionsLeft)
-      }
-      if ("Center" %in% input$shotAnalyse2Position) {
-        requestedPositions <- c(requestedPositions, positionsCenter)
-      }
-      if ("Right" %in% input$shotAnalyse2Position) {
-        requestedPositions <- c(requestedPositions, positionsRight)
-      }
-      if ("Inside circle" %in% input$shotAnalyse2Position) {
-        requestedPositions <- c(requestedPositions, positionsInCircle)
-      }
-      if ("Ouside Circle" %in% input$shotAnalyse2Position) {
-        requestedPositions <- c(requestedPositions, positionsOutCircle)
-      }
-      print(rsShotResult)
-      #select positions
-      resultsOfRequestedPositions <-
-        rsShotResult[rsShotResult$fullname %in% input$shotAnalyse2Players
-                     &
-                       as.Date(rsShotResult$starttime) <= input$shotAnalyse2Date[2]
-                     &
-                       as.Date(rsShotResult$starttime) >= input$shotAnalyse2Date[1]
-                     &
-                       rsShotResult$value3 %in% requestedPositions
-                     & 
-                       rsShotResult$value4 == input$shotAnalyse2ShotType
-                     ,] #probleem met positions, omdat het nu bij alle positions moet staan. Moet or worden.
-      if (nrow(resultsOfRequestedPositions) >= 1) {
-        resultPerPosition <-
-          with(resultsOfRequestedPositions,
-               aggregate(
-                 list(
-                   totalTaken = as.integer(value2),
-                   totalMade = as.integer(value)
-                 ),
-                 list(
-                   accountid = accountid,
-                   fullname = fullname,
-                   eventid = eventid,
-                   eventdate = starttime
-                 ),
-                 sum
-               ))
-        # calculate percentage
-        resultPerPosition$percentage <-
-          ((
-            as.integer(resultPerPosition$totalMade) / as.integer(resultPerPosition$totalTaken)
-          ) * 100)
-        
-        print(resultPerPosition)
-        
-        ggplot(resultPerPosition,
-               aes(x = eventdate,
-                   #x = as.Date(
-                   #      ISOdate(
-                   #        substr(eventdate,1,4),
-                   #        substr(eventdate,6,7),
-                   #        substr(eventdate,9,10)
-                   #      )
-                   #    ),
-                   y = percentage)) +
-          geom_line(aes(colour = as.character(accountid))) +
-          geom_point(aes(colour = as.character(accountid))) +
-          xlab("eventdate") +
-          scale_colour_manual(
-            values = palette("default"),
-            name = "Players",
-            labels = resultPerPosition$fullname,
-            breaks = resultPerPosition$accountid
-          )
-      }
-      
-    })
+    }
+    })  
   }
   
   # render the heatmap
