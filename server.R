@@ -699,7 +699,12 @@ shinyServer(function(input, output, session) {
       if (currentUser$role == "a") {
         #User is an admin
         #Render the sidebar 
-        sidebarMenu(id = "tabs",
+        sidebarMenu(tags$div(
+          style="margin-top:180%; bottom: 0; position: fixed;",
+          menuItem(
+            img(src='logo_final.png', width = 230)
+          )
+        ),id = "tabs",
                     menuItem(
                       "Admin",
                       tabName = "admin",
@@ -730,9 +735,15 @@ shinyServer(function(input, output, session) {
               icon = icon("bar-chart")
             ),
             menuSubItem(
-              "Shot results 2",
+              "results 2",
               tabName = "shotAnalyse2",
               icon = icon("line-chart")
+            )
+          ), 
+          tags$div(
+            style="margin-top:180%; bottom: 0; position: fixed;",
+            menuItem(
+              img(src='logo_final.png', width = 230)
             )
           )
         )
@@ -750,6 +761,12 @@ shinyServer(function(input, output, session) {
           max(rsShotResult[currentUser$accountid == rsShotResult$accountid & rsShotResult$value != 0, ]$eventid, na.rm = TRUE)
         #Render the sidebar 
         sidebarMenu(
+          tags$div(
+            style="margin-top:180%; bottom: 0; position: fixed;",
+            menuItem(
+              img(src='logo_final.png', width = 230)
+            )
+          ),
           id = "tabs",
           menuItem(
             "Home",
@@ -1085,7 +1102,7 @@ shinyServer(function(input, output, session) {
         print(resultPerPosition)
         
         ggplot(resultPerPosition,
-               aes(x = eventid,
+               aes(x = eventdate,
                    #x = as.Date(
                    #      ISOdate(
                    #        substr(eventdate,1,4),
@@ -1096,7 +1113,7 @@ shinyServer(function(input, output, session) {
                    y = percentage)) +
           geom_line(aes(colour = as.character(accountid))) +
           geom_point(aes(colour = as.character(accountid))) +
-          xlab("eventid") +
+          xlab("eventdate") +
           scale_colour_manual(
             values = palette("default"),
             name = "Players",
@@ -1210,5 +1227,6 @@ shinyServer(function(input, output, session) {
     rsShotResult <<-
       rsShotResult[rsShotResult$percentage <= 100,]#filter only viable percentage
   }
+
 })
 
