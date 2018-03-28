@@ -562,11 +562,6 @@ shinyServer(function(input, output, session) {
             "Shot results",
             tabName = "shotAnalyse",
             icon = icon("bar-chart")
-          ),
-          menuSubItem(
-            "Shot results 2",
-            tabName = "shotAnalyse2",
-            icon = icon("line-chart")
           )
         )
       )
@@ -733,11 +728,6 @@ shinyServer(function(input, output, session) {
               "Shot results",
               tabName = "shotAnalyse",
               icon = icon("bar-chart")
-            ),
-            menuSubItem(
-              "results 2",
-              tabName = "shotAnalyse2",
-              icon = icon("line-chart")
             )
           ), 
           tags$div(
@@ -1088,45 +1078,6 @@ shinyServer(function(input, output, session) {
       
     }
     })  
-    
-    
-    
-    
-    output$shotAnalyse2 <- renderPlot({
-      
-      
-      head(rsShotResult)
-      
-      
-      if(input$shotAnalyse2ShotType == "free_throw"){
-        position <- 0
-        updateSelectInput(session, "shotAnalyse2Position", selected = 0)
-      } else{
-        position <- input$shotAnalyse2Position
-      }
-      ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalyse2Players
-                          &
-                            as.Date(rsShotResult$startdate) <= input$shotAnalyse2Date[2]
-                          &
-                            as.Date(rsShotResult$startdate) >= input$shotAnalyse2Date[1]
-                          &
-                            rsShotResult$value3 == position
-                          & 
-                            rsShotResult$value4 == input$shotAnalyse2ShotType
-                          , ],
-             aes(x = strptime(starttime, format="%Y-%m-%d"),
-                 y = percentage)) +
-        geom_line(aes(colour = as.character(accountid))) +
-        geom_point(aes(colour = as.character(accountid))) +
-        xlab("starttime") +
-        scale_colour_manual(
-          values = palette("default"),
-          name = "Players",
-          breaks = rsShotResult$accountid
-        )
-      
-      
-    })
   }
   
   # render the heatmap

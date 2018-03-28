@@ -211,37 +211,6 @@ dashboardUI <<- fluidPage(
                     box(width = 2, radioButtons("staafOfLijnShotAnalyse1", label = NULL,choices = list("Bar" = 1, "Line" = 2
                     ),selected = 1, inline = TRUE), style = "float:left")
                   ),
-          tabItem(tabName = "shotAnalyse2",
-                  fluidRow(
-                    #input and filter options for the graph
-                    box(
-                      width = 12,
-                      selectizeInput(
-                        "shotAnalyse2Players",
-                        "Players",
-                        c(allPlayers$full),
-                        selected = allPlayers[1, "Playername"],
-                        multiple = TRUE
-                      ),
-                      dateRangeInput(
-                        'shotAnalyse2Date',
-                        label = 'Date range input: yyyy-mm-dd',
-                        start = "2017-03-12",
-                        end = format(Sys.Date(), format = "%Y-%m-%d")
-                      ),
-                      selectInput(
-                        "shotAnalyse2Position", "Shot position:",
-                        c(1:14)
-                      ),
-                    
-                    
-                    selectInput("shotAnalyse2ShotType", "Type of shot",
-                                setNames(c("free_throw","catch_throw","dribble"),c("Free throw", "Catch & Shoot", "From dribble")))
-                  ), #end of box
-                    #the bar chart
-                    box(width = 12,
-                        plotOutput("shotAnalyse2"))
-                  )),
           #home page of a player
           tabItem(
             tabName = "homePlayer",
