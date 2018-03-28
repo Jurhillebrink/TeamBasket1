@@ -1097,6 +1097,7 @@ shinyServer(function(input, output, session) {
              }
    
     else {
+      rsShotResult$starttime <- as.Date(rsShotResult$starttime)
       # The next lines are to locally save a pdf. We have not found a better way that works yet
       pdfplot <- ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
                           &
@@ -1108,10 +1109,11 @@ shinyServer(function(input, output, session) {
                           & 
                             rsShotResult$value4 == input$shotAnalyseShotType
                           , ],
-             aes(x = strptime(starttime, format="%Y-%m-%d"),
-                 y = percentage)) +
-        geom_line(aes(colour = as.character(accountid))) +
-        geom_point(aes(colour = as.character(accountid))) +
+            aes(starttime, percentage, col = as.factor(accountid))) +
+        geom_point() +
+        geom_line() +
+        scale_x_date(date_labels = "%Y-%m-%d",
+                     breaks = rsShotResult$starttime) +
         xlab("starttime") +
         scale_colour_manual(
           values = palette("default"),
