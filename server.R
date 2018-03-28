@@ -45,6 +45,8 @@ shinyServer(function(input, output, session) {
     renderAnalyses()
   }
   
+  # to save pdf
+  savedPdf <<- NULL
   values <- reactiveValues(authenticated = FALSE)
   
   # Return the UI for a modal dialog with data selection input. If 'failed'
@@ -1205,6 +1207,17 @@ shinyServer(function(input, output, session) {
     rsShotResult <<-
       rsShotResult[rsShotResult$percentage <= 100,]#filter only viable percentage
   }
+  
+  locallySavePdf <- function(pdfSave) {
+    savedPdf <<- pdfSave
+  }
+  
+  observeEvent(input$pdfButton, {
+    print("making pdf")
+    pdf("pdfdata.pdf",width=7,height=5, title = "Mijn test graph", onefile= T)
+    print(savedPdf)
+    dev.off()
+  })
 
 })
 
