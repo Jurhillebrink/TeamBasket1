@@ -1101,8 +1101,7 @@ shinyServer(function(input, output, session) {
       
     }
     })
-      
-      locallySavePdf(renderPlot({
+      pdfPlot <- renderPlot({
         if(input$shotAnalyseShotType == "free_throw"){
           position <- 0
           updateSelectInput(session, "shotAnalysePosition", selected = 0)
@@ -1151,7 +1150,8 @@ shinyServer(function(input, output, session) {
             )     
           
         }
-      }))
+      })
+      locallySavePdf(pdfPlot)
       
       
   }
