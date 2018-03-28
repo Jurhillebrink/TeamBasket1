@@ -230,15 +230,8 @@ dashboardUI <<- fluidPage(
                         end = format(Sys.Date(), format = "%Y-%m-%d")
                       ),
                       selectInput(
-                        "shotAnalyse2Position",
-                        "Shot position:",
-                        list(
-                          `All` = c("All"),
-                          `Angle` = c("Left", "Center", "Right"),
-                          `Circle` = c("Inside circle", "Outside circle")
-                        ),
-                        multiple = TRUE,
-                        selected = c("All")
+                        "shotAnalyse2Position", "Shot position:",
+                        c(1:14)
                       ),
                     
                     

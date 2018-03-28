@@ -1063,64 +1063,38 @@ shinyServer(function(input, output, session) {
     })
     
     output$shotAnalyse2 <- renderPlot({
-  
-      print(rsShotResult)
-      #select positions
-      resultsOfRequestedPositions <-
-        rsShotResult[rsShotResult$fullname %in% input$shotAnalyse2Players
-                     &
-                       as.Date(rsShotResult$starttime) <= input$shotAnalyse2Date[2]
-                     &
-                       as.Date(rsShotResult$starttime) >= input$shotAnalyse2Date[1]
-                     &
-                       rsShotResult$value3 %in% requestedPositions
-                     & 
-                       rsShotResult$value4 == input$shotAnalyse2ShotType
-                     ,] #probleem met positions, omdat het nu bij alle positions moet staan. Moet or worden.
-      if (nrow(resultsOfRequestedPositions) >= 1) {
-        resultPerPosition <-
-          with(resultsOfRequestedPositions,
-               aggregate(
-                 list(
-                   totalTaken = as.integer(value2),
-                   totalMade = as.integer(value)
-                 ),
-                 list(
-                   accountid = accountid,
-                   fullname = fullname,
-                   eventid = eventid,
-                   eventdate = starttime
-                 ),
-                 sum
-               ))
-        # calculate percentage
-        resultPerPosition$percentage <-
-          ((
-            as.integer(resultPerPosition$totalMade) / as.integer(resultPerPosition$totalTaken)
-          ) * 100)
-        
-        print(resultPerPosition)
-        
-        ggplot(resultPerPosition,
-               aes(x = eventdate,
-                   #x = as.Date(
-                   #      ISOdate(
-                   #        substr(eventdate,1,4),
-                   #        substr(eventdate,6,7),
-                   #        substr(eventdate,9,10)
-                   #      )
-                   #    ),
-                   y = percentage)) +
-          geom_line(aes(colour = as.character(accountid))) +
-          geom_point(aes(colour = as.character(accountid))) +
-          xlab("eventdate") +
-          scale_colour_manual(
-            values = palette("default"),
-            name = "Players",
-            labels = resultPerPosition$fullname,
-            breaks = resultPerPosition$accountid
-          )
+      
+      
+      head(rsShotResult)
+      
+      
+      if(input$shotAnalyse2ShotType == "free_throw"){
+        position <- 0
+        updateSelectInput(session, "shotAnalyse2Position", selected = 0)
+      } else{
+        position <- input$shotAnalyse2Position
       }
+      ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalyse2Players
+                          &
+                            as.Date(rsShotResult$startdate) <= input$shotAnalyse2Date[2]
+                          &
+                            as.Date(rsShotResult$startdate) >= input$shotAnalyse2Date[1]
+                          &
+                            rsShotResult$value3 == position
+                          & 
+                            rsShotResult$value4 == input$shotAnalyse2ShotType
+                          , ],
+             aes(x = strptime(starttime, format="%Y-%m-%d"),
+                 y = percentage)) +
+        geom_line(aes(colour = as.character(accountid))) +
+        geom_point(aes(colour = as.character(accountid))) +
+        xlab("starttime") +
+        scale_colour_manual(
+          values = palette("default"),
+          name = "Players",
+          breaks = rsShotResult$accountid
+        )
+      
       
     })
   }
