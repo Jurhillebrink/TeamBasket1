@@ -1073,7 +1073,8 @@ shinyServer(function(input, output, session) {
         scale_colour_manual(
           values = palette("default"),
           name = "Players",
-          breaks = rsShotResult$accountid
+          breaks = rsShotResult$accountid,
+          labels = paste0(rsShotResult$firstname,' ', rsShotResult$lastname)
         )     
       
     }
