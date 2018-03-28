@@ -1058,6 +1058,7 @@ shinyServer(function(input, output, session) {
         position <- input$shotAnalysePosition
       }
              if(input$staafOfLijnShotAnalyse1 == 1){
+               # The next lines are to locally save a pdf. We have not found a better way that works yet
                pdfplot <- ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
                                    &
                                      as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
@@ -1076,6 +1077,7 @@ shinyServer(function(input, output, session) {
                
                locallySavePdf(pdfplot)
                
+               # Now the actaul graph for output
                ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
                                    &
                                      as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
@@ -1095,7 +1097,7 @@ shinyServer(function(input, output, session) {
              }
    
     else {
-      
+      # The next lines are to locally save a pdf. We have not found a better way that works yet
       pdfplot <- ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
                           &
                             as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
@@ -1120,6 +1122,7 @@ shinyServer(function(input, output, session) {
       
       locallySavePdf(pdfplot)
       
+      # Now the actaul graph for output
       ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
                           &
                             as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
