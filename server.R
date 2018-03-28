@@ -16,7 +16,7 @@ library(ggplot2)
 library(openssl)
 library(shinyjs) #to hide side bar
 library(grid) # for rastergrob, to set court as background of plot
-
+library(mailR)
 
 require("DT")
 
@@ -45,6 +45,7 @@ shinyServer(function(input, output, session) {
     renderAnalyses()
   }
   
+  savedPdf <<- NULL
   values <- reactiveValues(authenticated = FALSE)
   
   # Return the UI for a modal dialog with data selection input. If 'failed'
@@ -56,7 +57,18 @@ shinyServer(function(input, output, session) {
       passwordInput("uiPassword", "Password:"),
       textOutput('warning'),
       tags$head(tags$style("#warning{color: red;}")),
-      footer = tagList(actionButton("ok", "Login"))
+      footer = tagList(actionButton("forgotPass", "Forgot your password?", style = "float:left"), actionButton("ok", "Login"))
+    )
+  }
+  
+  dataModal1 <- function(failed = FALSE) {
+    modalDialog(
+      img(src='logo.jpg', align = "right", width = 100),
+      span("Enter your email and a new password will be sent."),
+      textInput("uiEmail", "Email:"),
+      textOutput('warningPassForgot'),
+      tags$head(tags$style("#warningPassForgot{color: red;}")),
+      footer = tagList(actionButton("back", "Back", style = "float:left"), actionButton("sendMail", "Send mail"))
     )
   }
   
@@ -64,6 +76,63 @@ shinyServer(function(input, output, session) {
   # This `observe` is suspended only whith right user credential
   obs1 <- observe({
     showModal(dataModal())
+  })
+  
+  #check if email is valid by regexp
+  isValidEmail <- function(x) {
+    grepl("\\<[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\>", as.character(x), 
+          ignore.case=TRUE)
+  }
+  
+  #send an email with new password if the mailaddres is correct
+  observeEvent(input$sendMail, {
+    if(isValidEmail(input$uiEmail)){ 
+      output$warningPassForgot <-
+        renderText({
+          paste("")
+        })
+      samp<-c(1:9,letters,LETTERS,"!")
+      newPass <- paste(sample(samp,8),collapse="")
+      
+      query <- paste0(
+        "exec GETACCOUNTWITHEMAIL
+        @email = ?email"
+      )
+      sql <- sqlInterpolate(conn, query, email = input$uiEmail)
+      rs <- dbGetQuery(conn, sql)
+      if(nrow(rs) == 1){
+        newPassEncrypt <- toString(sha256(toString(newPass), key = NULL))
+        query <- paste0(
+          "exec UPDATEPASSWORDS
+        @ACCOUNTID = ?accountid,
+        @PASSWORD = ?password,
+        @UNHASHEDPASSWORD = ?unhashedpassword"
+        )
+        sql <- sqlInterpolate(conn, query,
+                              accountid = rs,
+                              password = newPassEncrypt,
+                              unhashedpassword = newPass)
+        dbSendUpdate(conn, sql)
+        updateTextInput(session, "uiUsername", value = input$uiEmail)
+        removeModal()
+        showModal(dataModal())
+        send.mail(from = "passresetcto@gmail.com",
+                  to = input$uiEmail,
+                  subject = "Password reset",
+                  body = paste0("Hello,<br> You have requested a new password.<br><br>This is your new password: ", newPass, "<br><br>Kind regards"),
+                  smtp = list(host.name = "smtp.gmail.com", port = 465, user.name = "passresetcto@gmail.com", passwd = "z0ik3Rt9", ssl = TRUE), authenticate = TRUE,
+                  html = TRUE,
+                  send = TRUE)
+      }else{
+        removeModal()
+        showModal(dataModal())
+      }
+    }else{
+      output$warningPassForgot <-
+        renderText({
+          paste("No valid email address!")
+        })
+    }
   })
   
   # When OK button is pressed, attempt to authenticate. If successful,
@@ -118,6 +187,19 @@ shinyServer(function(input, output, session) {
     }
     
   })
+  
+  #show forgot password modal
+  obs2 <- observe({
+    req(input$forgotPass)
+    showModal(dataModal1())
+  })  
+  
+  #back button in forgot password modal to login modal
+  obs3 <- observe({
+    req(input$back)
+    showModal(dataModal())
+  }) 
+  
   
   output$teammates <- renderDataTable(teammates)
   
@@ -397,10 +479,11 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  
+  
   # refresh the player list in a event
   observeEvent(input$refreshPlayers, {
     getAllPlayers()
-    print(paste("latest event: ", latestEventid))
     query <- paste0(
       "exec GETPLAYERSINEVENT 
       @EVENTID = ?eventid"
@@ -410,12 +493,29 @@ shinyServer(function(input, output, session) {
                           eventid = latestEventid)
     
     rs <- dbGetQuery(conn, sql)
-
+    
     playersInEvent <<- rs$accountid
     print(rs)
     renderPublicEvent()
     #session$reload()
     #shinyjs::reset("playerSelect")
+  })
+  
+  #add a player during an event
+  observeEvent(input$addPlayerInEvent, {
+    for (player in input$addPlayers){
+      query <- paste0(
+        "exec CREATEUSEREVENT 
+        @ACCOUNTID = ?accountid,
+        @EVENTID = ?eventid"
+      )
+      sql <- sqlInterpolate(conn, query, 
+                            accountid = player, 
+                            eventid = latestEventid)
+      dbSendUpdate(conn, sql)
+      playersInEvent <- append(playersInEvent, input$addPlayers)
+      renderPublicEvent()
+    }  
   })
   
   # to end a event
@@ -459,7 +559,6 @@ shinyServer(function(input, output, session) {
     sql <- sqlInterpolate(conn, query,
                           eventid = latestEventid)
     dbSendUpdate(conn, sql)
-
     #Render the menu again, but select the last event tab.
     output$menu <- renderMenu({
       sidebarMenu(
@@ -481,11 +580,6 @@ shinyServer(function(input, output, session) {
             "Shot results",
             tabName = "shotAnalyse",
             icon = icon("bar-chart")
-          ),
-          menuSubItem(
-            "Shot results 2",
-            tabName = "shotAnalyse2",
-            icon = icon("line-chart")
           )
         )
       )
@@ -493,6 +587,8 @@ shinyServer(function(input, output, session) {
     # show menu
     shinyjs::removeClass(selector = "body", class = "sidebar-collapse")
     removeModal()
+    getShotResults()
+    renderLastEvent()
   }
   
   ##############################################################
@@ -602,6 +698,8 @@ shinyServer(function(input, output, session) {
   })
   
   
+  
+  
   ##############################################################
   
   checkData <- function() {
@@ -618,7 +716,12 @@ shinyServer(function(input, output, session) {
       if (currentUser$role == "a") {
         #User is an admin
         #Render the sidebar 
-        sidebarMenu(id = "tabs",
+        sidebarMenu(tags$div(
+          style="margin-top:180%; bottom: 0; position: fixed;",
+          menuItem(
+            img(src='logo_final.png', width = 230)
+          )
+        ),id = "tabs",
                     menuItem(
                       "Admin",
                       tabName = "admin",
@@ -647,11 +750,12 @@ shinyServer(function(input, output, session) {
               "Shot results",
               tabName = "shotAnalyse",
               icon = icon("bar-chart")
-            ),
-            menuSubItem(
-              "Shot results 2",
-              tabName = "shotAnalyse2",
-              icon = icon("line-chart")
+            )
+          ), 
+          tags$div(
+            style="margin-top:180%; bottom: 0; position: fixed;",
+            menuItem(
+              img(src='logo_final.png', width = 230)
             )
           )
         )
@@ -669,6 +773,12 @@ shinyServer(function(input, output, session) {
           max(rsShotResult[currentUser$accountid == rsShotResult$accountid & rsShotResult$value != 0, ]$eventid, na.rm = TRUE)
         #Render the sidebar 
         sidebarMenu(
+          tags$div(
+            style="margin-top:180%; bottom: 0; position: fixed;",
+            menuItem(
+              img(src='logo_final.png', width = 230)
+            )
+          ),
           id = "tabs",
           menuItem(
             "Home",
@@ -712,14 +822,12 @@ shinyServer(function(input, output, session) {
   renderLastEvent <- function(){
     # get the id of the last event
     query <- paste0(
-      "exec GETLASTEVENT"
+      "exec GETLASTDATE"
     )
     sql <- sqlInterpolate(conn, query)
-    latestEvent <- dbGetQuery(conn, sql)$eventid
+    latestDate <- dbGetQuery(conn, sql)$starttime
     
-    #latestEvent <- 401 #### REMOVE THIS LATER!!!!!!!! # this is done because there only is 1 legit event right now
-    
-    eventData <- rsShotResult[rsShotResult$eventid == latestEvent,] # select dtata of last event
+    eventData <- rsShotResult[rsShotResult$starttime == latestDate,] # select dtata of last date
     
     # render the page
     output$last_event_coach <- renderUI({
@@ -917,12 +1025,15 @@ shinyServer(function(input, output, session) {
     sql <- sqlInterpolate(conn, query)
     result <- dbGetQuery(conn, sql)
     
-    print(result)
-    playersInEvent <<- result$accountid
-    x <- result$accountid
-    print(paste("playersInEvent", playersInEvent))
-    print(paste("allplayers filtered met x: ", allPlayers[allPlayers$accountid %in% x, ]$firstname))
-    print("---")
+    query <- paste0(
+      "exec GETPLAYERSINEVENT 
+      @EVENTID = ?eventid"
+    )
+    
+    sql <- sqlInterpolate(conn, query,
+                          eventid = result$eventid)
+    result <- dbGetQuery(conn, sql)
+    playersInEvent <<- as.numeric(result$accountid)
     output$public_event <- renderUI({
       publicEventUiLayout(playersInEvent)
     })
@@ -938,15 +1049,82 @@ shinyServer(function(input, output, session) {
   # coach analysis
   renderAnalyses <- function(){
     # make plot
-    output$shotAnalyse <- renderPlot({
-      print(input$shotAnalyseDate)
-      print(input$shotAnalyseShotType)
+    
+      output$shotAnalyse <- renderPlot({
       if(input$shotAnalyseShotType == "free_throw"){
         position <- 0
         updateSelectInput(session, "shotAnalysePosition", selected = 0)
       } else{
         position <- input$shotAnalysePosition
       }
+             if(input$staafOfLijnShotAnalyse1 == 1){
+               # The next lines are to locally save a pdf. We have not found a better way that works yet
+               pdfplot <- ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
+                                   &
+                                     as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
+                                   &
+                                     as.Date(rsShotResult$startdate) >= input$shotAnalyseDate[1]
+                                   &
+                                     rsShotResult$value3 == position
+                                   & 
+                                     rsShotResult$value4 == input$shotAnalyseShotType
+                                   , ],
+                      aes(x = starttime,
+                          y = percentage,
+                          fill = fullname)) +
+                 geom_bar(stat = "identity", position = "dodge") +
+                 labs(fill = 'Names')
+               
+               locallySavePdf(pdfplot)
+               
+               # Now the actaul graph for output
+               ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
+                                   &
+                                     as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
+                                   &
+                                     as.Date(rsShotResult$startdate) >= input$shotAnalyseDate[1]
+                                   &
+                                     rsShotResult$value3 == position
+                                   & 
+                                     rsShotResult$value4 == input$shotAnalyseShotType
+                                   , ],
+             aes(x = starttime,
+                 y = percentage,
+                 fill = fullname)) +
+        geom_bar(stat = "identity", position = "dodge") +
+        labs(fill = 'Names')
+               
+             }
+   
+    else {
+      rsShotResult$starttime <- as.Date(rsShotResult$starttime)
+      # The next lines are to locally save a pdf. We have not found a better way that works yet
+      pdfplot <- ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
+                          &
+                            as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
+                          &
+                            as.Date(rsShotResult$startdate) >= input$shotAnalyseDate[1]
+                          &
+                            rsShotResult$value3 == position
+                          & 
+                            rsShotResult$value4 == input$shotAnalyseShotType
+                          , ],
+            aes(starttime, percentage, col = as.factor(accountid))) +
+        geom_point() +
+        geom_line() +
+        scale_x_date(date_labels = "%Y-%m-%d",
+                     breaks = rsShotResult$starttime) +
+        xlab("starttime") +
+        scale_colour_manual(
+          values = palette("default"),
+          name = "Players",
+          breaks = rsShotResult$accountid,
+          labels = paste0(rsShotResult$firstname,' ', rsShotResult$lastname)
+        )  
+      
+      locallySavePdf(pdfplot)
+      
+      # Now the actaul graph for output
       ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
                           &
                             as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
@@ -957,94 +1135,21 @@ shinyServer(function(input, output, session) {
                           & 
                             rsShotResult$value4 == input$shotAnalyseShotType
                           , ],
-             aes(x = starttime,
-                 y = percentage,
-                 fill = fullname)) +
-        geom_bar(stat = "identity", position = "dodge") +
-        labs(fill = 'Names')
+        aes(starttime, percentage, col = as.factor(accountid))) +
+        geom_point() +
+        geom_line() +
+        scale_x_date(date_labels = "%Y-%m-%d",
+                breaks = rsShotResult$starttime) +
+        xlab("starttime") +
+        scale_colour_manual(
+          values = palette("default"),
+          name = "Players",
+          breaks = rsShotResult$accountid,
+          labels = paste0(rsShotResult$firstname,' ', rsShotResult$lastname)
+        )     
+    }
     })
-    
-    output$shotAnalyse2 <- renderPlot({
-      requestedPositions <- c()
       
-      # add the positions to the requested positions
-      if ("All" %in% input$shotAnalyse2Position) {
-        requestedPositions <- c(requestedPositions, positionsAll)
-      }
-      if ("Left" %in% input$shotAnalyse2Position)  {
-        requestedPositions <- c(requestedPositions, positionsLeft)
-      }
-      if ("Center" %in% input$shotAnalyse2Position) {
-        requestedPositions <- c(requestedPositions, positionsCenter)
-      }
-      if ("Right" %in% input$shotAnalyse2Position) {
-        requestedPositions <- c(requestedPositions, positionsRight)
-      }
-      if ("Inside circle" %in% input$shotAnalyse2Position) {
-        requestedPositions <- c(requestedPositions, positionsInCircle)
-      }
-      if ("Ouside Circle" %in% input$shotAnalyse2Position) {
-        requestedPositions <- c(requestedPositions, positionsOutCircle)
-      }
-      print(rsShotResult)
-      #select positions
-      resultsOfRequestedPositions <-
-        rsShotResult[rsShotResult$fullname %in% input$shotAnalyse2Players
-                     &
-                       as.Date(rsShotResult$starttime) <= input$shotAnalyse2Date[2]
-                     &
-                       as.Date(rsShotResult$starttime) >= input$shotAnalyse2Date[1]
-                     &
-                       rsShotResult$value3 %in% requestedPositions
-                     & 
-                       rsShotResult$value4 == input$shotAnalyse2ShotType
-                     ,] #probleem met positions, omdat het nu bij alle positions moet staan. Moet or worden.
-      if (nrow(resultsOfRequestedPositions) >= 1) {
-        resultPerPosition <-
-          with(resultsOfRequestedPositions,
-               aggregate(
-                 list(
-                   totalTaken = as.integer(value2),
-                   totalMade = as.integer(value)
-                 ),
-                 list(
-                   accountid = accountid,
-                   fullname = fullname,
-                   eventid = eventid,
-                   eventdate = starttime
-                 ),
-                 sum
-               ))
-        # calculate percentage
-        resultPerPosition$percentage <-
-          ((
-            as.integer(resultPerPosition$totalMade) / as.integer(resultPerPosition$totalTaken)
-          ) * 100)
-        
-        print(resultPerPosition)
-        
-        ggplot(resultPerPosition,
-               aes(x = eventid,
-                   #x = as.Date(
-                   #      ISOdate(
-                   #        substr(eventdate,1,4),
-                   #        substr(eventdate,6,7),
-                   #        substr(eventdate,9,10)
-                   #      )
-                   #    ),
-                   y = percentage)) +
-          geom_line(aes(colour = as.character(accountid))) +
-          geom_point(aes(colour = as.character(accountid))) +
-          xlab("eventid") +
-          scale_colour_manual(
-            values = palette("default"),
-            name = "Players",
-            labels = resultPerPosition$fullname,
-            breaks = resultPerPosition$accountid
-          )
-      }
-      
-    })
   }
   
   # render the heatmap
@@ -1149,5 +1254,19 @@ shinyServer(function(input, output, session) {
     rsShotResult <<-
       rsShotResult[rsShotResult$percentage <= 100,]#filter only viable percentage
   }
+  
+  locallySavePdf <- function(pdfSave) {
+    #print("saving pdf")
+    savedPdf <<- pdfSave
+    
+  }
+  
+  observeEvent(input$pdfButton, {
+    print("making pdf")
+    pdf("pdfdata.pdf",width=7,height=5, title = "Mijn test graph", onefile= T)
+    print(savedPdf)
+    dev.off()
+  })
+
 })
 
