@@ -45,7 +45,7 @@ shinyServer(function(input, output, session) {
     renderAnalyses()
   }
   
-
+  savedPdf <<- NULL
   values <- reactiveValues(authenticated = FALSE)
   
   # Return the UI for a modal dialog with data selection input. If 'failed'
@@ -1051,9 +1051,7 @@ shinyServer(function(input, output, session) {
     # make plot
 
     
-      test <- renderPlot({
-      print(input$shotAnalyseDate)
-      print(input$shotAnalyseShotType)
+      output$shotAnalyse <- renderPlot({
       if(input$shotAnalyseShotType == "free_throw"){
         position <- 0
         updateSelectInput(session, "shotAnalysePosition", selected = 0)
@@ -1103,9 +1101,58 @@ shinyServer(function(input, output, session) {
       
     }
     })
-      print(" hij komt hier")
-      locallySavePdf(test)
-      output$shotAnalyse <- test
+      
+      locallySavePdf(renderPlot({
+        if(input$shotAnalyseShotType == "free_throw"){
+          position <- 0
+          updateSelectInput(session, "shotAnalysePosition", selected = 0)
+        } else{
+          position <- input$shotAnalysePosition
+        }
+        if(input$staafOfLijnShotAnalyse1 == 1){
+          ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
+                              &
+                                as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
+                              &
+                                as.Date(rsShotResult$startdate) >= input$shotAnalyseDate[1]
+                              &
+                                rsShotResult$value3 == position
+                              & 
+                                rsShotResult$value4 == input$shotAnalyseShotType
+                              , ],
+                 aes(x = starttime,
+                     y = percentage,
+                     fill = fullname)) +
+            geom_bar(stat = "identity", position = "dodge") +
+            labs(fill = 'Names')
+        }
+        
+        else {
+          ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
+                              &
+                                as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
+                              &
+                                as.Date(rsShotResult$startdate) >= input$shotAnalyseDate[1]
+                              &
+                                rsShotResult$value3 == position
+                              & 
+                                rsShotResult$value4 == input$shotAnalyseShotType
+                              , ],
+                 aes(x = strptime(starttime, format="%Y-%m-%d"),
+                     y = percentage)) +
+            geom_line(aes(colour = as.character(accountid))) +
+            geom_point(aes(colour = as.character(accountid))) +
+            xlab("starttime") +
+            scale_colour_manual(
+              values = palette("default"),
+              name = "Players",
+              breaks = rsShotResult$accountid,
+              labels = paste0(rsShotResult$firstname,' ', rsShotResult$lastname)
+            )     
+          
+        }
+      }))
+      
       
   }
   
@@ -1215,9 +1262,7 @@ shinyServer(function(input, output, session) {
   locallySavePdf <- function(pdfSave) {
     
     savedPdf <<- pdfSave
-    if(is.null(savedPdf)){
-      print(" hallo")
-    }
+    
   }
   
   observeEvent(input$pdfButton, {
