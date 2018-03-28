@@ -209,7 +209,8 @@ dashboardUI <<- fluidPage(
                         plotOutput("shotAnalyse")
                         )),
                     box(width = 2, radioButtons("staafOfLijnShotAnalyse1", label = NULL,choices = list("Bar" = 1, "Line" = 2
-                    ),selected = 1, inline = TRUE), style = "float:left")
+                    ),selected = 1, inline = TRUE), style = "float:left"),
+                  actionButton("pdfButton", "Generate PDF", style = "float:right")
                   ),
           #home page of a player
           tabItem(

@@ -45,6 +45,7 @@ shinyServer(function(input, output, session) {
     renderAnalyses()
   }
   
+  savedPdf <<- NULL
   values <- reactiveValues(authenticated = FALSE)
   
   # Return the UI for a modal dialog with data selection input. If 'failed'
@@ -478,10 +479,11 @@ shinyServer(function(input, output, session) {
     }
   })
   
+  
+  
   # refresh the player list in a event
   observeEvent(input$refreshPlayers, {
     getAllPlayers()
-    print(paste("latest event: ", latestEventid))
     query <- paste0(
       "exec GETPLAYERSINEVENT 
       @EVENTID = ?eventid"
@@ -491,12 +493,29 @@ shinyServer(function(input, output, session) {
                           eventid = latestEventid)
     
     rs <- dbGetQuery(conn, sql)
-
+    
     playersInEvent <<- rs$accountid
     print(rs)
     renderPublicEvent()
     #session$reload()
     #shinyjs::reset("playerSelect")
+  })
+  
+  #add a player during an event
+  observeEvent(input$addPlayerInEvent, {
+    for (player in input$addPlayers){
+      query <- paste0(
+        "exec CREATEUSEREVENT 
+        @ACCOUNTID = ?accountid,
+        @EVENTID = ?eventid"
+      )
+      sql <- sqlInterpolate(conn, query, 
+                            accountid = player, 
+                            eventid = latestEventid)
+      dbSendUpdate(conn, sql)
+      playersInEvent <- append(playersInEvent, input$addPlayers)
+      renderPublicEvent()
+    }  
   })
   
   # to end a event
@@ -540,7 +559,6 @@ shinyServer(function(input, output, session) {
     sql <- sqlInterpolate(conn, query,
                           eventid = latestEventid)
     dbSendUpdate(conn, sql)
-
     #Render the menu again, but select the last event tab.
     output$menu <- renderMenu({
       sidebarMenu(
@@ -569,6 +587,8 @@ shinyServer(function(input, output, session) {
     # show menu
     shinyjs::removeClass(selector = "body", class = "sidebar-collapse")
     removeModal()
+    getShotResults()
+    renderLastEvent()
   }
   
   ##############################################################
@@ -676,6 +696,8 @@ shinyServer(function(input, output, session) {
     }
     
   })
+  
+  
   
   
   ##############################################################
@@ -800,14 +822,12 @@ shinyServer(function(input, output, session) {
   renderLastEvent <- function(){
     # get the id of the last event
     query <- paste0(
-      "exec GETLASTEVENT"
+      "exec GETLASTDATE"
     )
     sql <- sqlInterpolate(conn, query)
-    latestEvent <- dbGetQuery(conn, sql)$eventid
+    latestDate <- dbGetQuery(conn, sql)$starttime
     
-    #latestEvent <- 401 #### REMOVE THIS LATER!!!!!!!! # this is done because there only is 1 legit event right now
-    
-    eventData <- rsShotResult[rsShotResult$eventid == latestEvent,] # select dtata of last event
+    eventData <- rsShotResult[rsShotResult$starttime == latestDate,] # select dtata of last date
     
     # render the page
     output$last_event_coach <- renderUI({
@@ -1005,12 +1025,15 @@ shinyServer(function(input, output, session) {
     sql <- sqlInterpolate(conn, query)
     result <- dbGetQuery(conn, sql)
     
-    print(result)
-    playersInEvent <<- result$accountid
-    x <- result$accountid
-    print(paste("playersInEvent", playersInEvent))
-    print(paste("allplayers filtered met x: ", allPlayers[allPlayers$accountid %in% x, ]$firstname))
-    print("---")
+    query <- paste0(
+      "exec GETPLAYERSINEVENT 
+      @EVENTID = ?eventid"
+    )
+    
+    sql <- sqlInterpolate(conn, query,
+                          eventid = result$eventid)
+    result <- dbGetQuery(conn, sql)
+    playersInEvent <<- as.numeric(result$accountid)
     output$public_event <- renderUI({
       publicEventUiLayout(playersInEvent)
     })
@@ -1026,10 +1049,8 @@ shinyServer(function(input, output, session) {
   # coach analysis
   renderAnalyses <- function(){
     # make plot
-
-    output$shotAnalyse <- renderPlot({
-      print(input$shotAnalyseDate)
-      print(input$shotAnalyseShotType)
+    
+      output$shotAnalyse <- renderPlot({
       if(input$shotAnalyseShotType == "free_throw"){
         position <- 0
         updateSelectInput(session, "shotAnalysePosition", selected = 0)
@@ -1037,6 +1058,26 @@ shinyServer(function(input, output, session) {
         position <- input$shotAnalysePosition
       }
              if(input$staafOfLijnShotAnalyse1 == 1){
+               # The next lines are to locally save a pdf. We have not found a better way that works yet
+               pdfplot <- ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
+                                   &
+                                     as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
+                                   &
+                                     as.Date(rsShotResult$startdate) >= input$shotAnalyseDate[1]
+                                   &
+                                     rsShotResult$value3 == position
+                                   & 
+                                     rsShotResult$value4 == input$shotAnalyseShotType
+                                   , ],
+                      aes(x = starttime,
+                          y = percentage,
+                          fill = fullname)) +
+                 geom_bar(stat = "identity", position = "dodge") +
+                 labs(fill = 'Names')
+               
+               locallySavePdf(pdfplot)
+               
+               # Now the actaul graph for output
                ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
                                    &
                                      as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
@@ -1052,10 +1093,36 @@ shinyServer(function(input, output, session) {
                  fill = fullname)) +
         geom_bar(stat = "identity", position = "dodge") +
         labs(fill = 'Names')
+               
              }
    
     else {
-      rsShotResult$starttime <- as.Date(rsShotResult$starttime)
+      # The next lines are to locally save a pdf. We have not found a better way that works yet
+      pdfplot <- ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
+                          &
+                            as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
+                          &
+                            as.Date(rsShotResult$startdate) >= input$shotAnalyseDate[1]
+                          &
+                            rsShotResult$value3 == position
+                          & 
+                            rsShotResult$value4 == input$shotAnalyseShotType
+                          , ],
+             aes(x = strptime(starttime, format="%Y-%m-%d"),
+                 y = percentage)) +
+        geom_line(aes(colour = as.character(accountid))) +
+        geom_point(aes(colour = as.character(accountid))) +
+        xlab("starttime") +
+        scale_colour_manual(
+          values = palette("default"),
+          name = "Players",
+          breaks = rsShotResult$accountid,
+          labels = paste0(rsShotResult$firstname,' ', rsShotResult$lastname)
+        )  
+      
+      locallySavePdf(pdfplot)
+      
+      # Now the actaul graph for output
       ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
                           &
                             as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
@@ -1077,9 +1144,10 @@ shinyServer(function(input, output, session) {
           name = "Players",
           breaks = rsShotResult$accountid,
           labels = paste0(rsShotResult$firstname,' ', rsShotResult$lastname)
-        )
+        )     
     }
-    })  
+    })
+      
   }
   
   # render the heatmap
@@ -1184,6 +1252,19 @@ shinyServer(function(input, output, session) {
     rsShotResult <<-
       rsShotResult[rsShotResult$percentage <= 100,]#filter only viable percentage
   }
+  
+  locallySavePdf <- function(pdfSave) {
+    #print("saving pdf")
+    savedPdf <<- pdfSave
+    
+  }
+  
+  observeEvent(input$pdfButton, {
+    print("making pdf")
+    pdf("pdfdata.pdf",width=7,height=5, title = "Mijn test graph", onefile= T)
+    print(savedPdf)
+    dev.off()
+  })
 
 })
 
