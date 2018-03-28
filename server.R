@@ -45,8 +45,7 @@ shinyServer(function(input, output, session) {
     renderAnalyses()
   }
   
-  # to save pdf
-  savedPdf <<- NULL
+
   values <- reactiveValues(authenticated = FALSE)
   
   # Return the UI for a modal dialog with data selection input. If 'failed'
@@ -1051,7 +1050,8 @@ shinyServer(function(input, output, session) {
   renderAnalyses <- function(){
     # make plot
 
-    output$shotAnalyse <- renderPlot({
+    
+      test <- renderPlot({
       print(input$shotAnalyseDate)
       print(input$shotAnalyseShotType)
       if(input$shotAnalyseShotType == "free_throw"){
@@ -1102,7 +1102,11 @@ shinyServer(function(input, output, session) {
         )     
       
     }
-    })  
+    })
+      print(" hij komt hier")
+      locallySavePdf(test)
+      output$shotAnalyse <- test
+      
   }
   
   # render the heatmap
@@ -1209,7 +1213,11 @@ shinyServer(function(input, output, session) {
   }
   
   locallySavePdf <- function(pdfSave) {
+    
     savedPdf <<- pdfSave
+    if(is.null(savedPdf)){
+      print(" hallo")
+    }
   }
   
   observeEvent(input$pdfButton, {
