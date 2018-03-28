@@ -1055,6 +1055,7 @@ shinyServer(function(input, output, session) {
              }
    
     else {
+      rsShotResult$starttime <- as.Date(rsShotResult$starttime)
       ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
                           &
                             as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
@@ -1065,18 +1066,18 @@ shinyServer(function(input, output, session) {
                           & 
                             rsShotResult$value4 == input$shotAnalyseShotType
                           , ],
-             aes(x = strptime(starttime, format="%Y-%m-%d"),
-                 y = percentage)) +
-        geom_line(aes(colour = as.character(accountid))) +
-        geom_point(aes(colour = as.character(accountid))) +
+        aes(starttime, percentage, col = as.factor(accountid))) +
+        geom_point() +
+        geom_line() +
+        scale_x_date(date_labels = "%Y-%m-%d",
+                breaks = rsShotResult$starttime) +
         xlab("starttime") +
         scale_colour_manual(
           values = palette("default"),
           name = "Players",
           breaks = rsShotResult$accountid,
           labels = paste0(rsShotResult$firstname,' ', rsShotResult$lastname)
-        )     
-      
+        )
     }
     })  
   }
