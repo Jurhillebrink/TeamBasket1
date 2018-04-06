@@ -1255,18 +1255,27 @@ shinyServer(function(input, output, session) {
       rsShotResult[rsShotResult$percentage <= 100,]#filter only viable percentage
   }
   
-  locallySavePdf <- function(pdfSave) {
-    #print("saving pdf")
-    savedPdf <<- pdfSave
-    
-  }
-  
-  observeEvent(input$pdfButton, {
+  # Make pdf file
+  makePdf <- function(){
     print("making pdf")
-    pdf("pdfdata.pdf",width=7,height=5, title = "Mijn test graph", onefile= T)
+    pdf("pdfdata.pdf",width=7,height=5, title = "Graph", onefile= T)
     print(savedPdf)
     dev.off()
-  })
+  }
+  
+  # Download file in browser  
+  output$pdfButton <- downloadHandler(
+    filename = "grafiek.pdf",
+    content = function(file) {
+      makePdf()
+      file.copy("pdfdata.pdf", file)
+    }
+  )
+  
+  locallySavePdf <- function(pdfSave) {
+    savedPdf <<- pdfSave
+  }
+  
 
 })
 
