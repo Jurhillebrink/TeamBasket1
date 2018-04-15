@@ -1051,14 +1051,15 @@ shinyServer(function(input, output, session) {
     # make plot
     
       output$shotAnalyse <- renderPlot({
+        
       if(input$shotAnalyseShotType == "free_throw"){
         position <- 0
         updateSelectInput(session, "shotAnalysePosition", selected = 0)
       } else{
         position <- input$shotAnalysePosition
       }
+        
              if(input$staafOfLijnShotAnalyse1 == 1){
-               # The next lines are to locally save a pdf. We have not found a better way that works yet
                pdfplot <- ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
                                    &
                                      as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
@@ -1076,31 +1077,24 @@ shinyServer(function(input, output, session) {
                  labs(fill = 'Names')
                
                locallySavePdf(pdfplot)
-               
-               # Now the actaul graph for output
-               ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
-                                   &
-                                     as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
-                                   &
-                                     as.Date(rsShotResult$startdate) >= input$shotAnalyseDate[1]
-                                   &
-                                     rsShotResult$value3 == position
-                                   & 
-                                     rsShotResult$value4 == input$shotAnalyseShotType
-                                   , ],
-             aes(x = starttime,
-                 y = percentage,
-                 fill = fullname)) +
-        geom_bar(stat = "identity", position = "dodge") +
-        labs(fill = 'Names')
-               
+               pdfplot
              }
    
     else {
       rsShotResult$starttime <- as.Date(rsShotResult$starttime)
-      # The next lines are to locally save a pdf. We have not found a better way that works yet
+      # Make dataframe or vector with average team percentage per training
+      teamData <- rsShotResult[as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
+                               &
+                                 as.Date(rsShotResult$startdate) >= input$shotAnalyseDate[1]
+                               &
+                                 rsShotResult$value3 == position
+                               &
+                                 rsShotResult$value4 == input$shotAnalyseShotType
+                               , ]
+      
       pdfplot <- ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
                           &
+                             
                             as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
                           &
                             as.Date(rsShotResult$startdate) >= input$shotAnalyseDate[1]
@@ -1110,6 +1104,7 @@ shinyServer(function(input, output, session) {
                             rsShotResult$value4 == input$shotAnalyseShotType
                           , ],
             aes(starttime, percentage, col = as.factor(accountid))) +
+        stat_summary(data=teamData, fun.y="mean", geom="line", size=2, color='red') +
         geom_point() +
         geom_line() +
         scale_x_date(date_labels = "%Y-%m-%d",
@@ -1123,30 +1118,7 @@ shinyServer(function(input, output, session) {
         )  
       
       locallySavePdf(pdfplot)
-      
-      # Now the actaul graph for output
-      ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
-                          &
-                            as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
-                          &
-                            as.Date(rsShotResult$startdate) >= input$shotAnalyseDate[1]
-                          &
-                            rsShotResult$value3 == position
-                          & 
-                            rsShotResult$value4 == input$shotAnalyseShotType
-                          , ],
-        aes(starttime, percentage, col = as.factor(accountid))) +
-        geom_point() +
-        geom_line() +
-        scale_x_date(date_labels = "%Y-%m-%d",
-                breaks = rsShotResult$starttime) +
-        xlab("starttime") +
-        scale_colour_manual(
-          values = palette("default"),
-          name = "Players",
-          breaks = rsShotResult$accountid,
-          labels = paste0(rsShotResult$firstname,' ', rsShotResult$lastname)
-        )     
+      pdfplot
     }
     })
       
