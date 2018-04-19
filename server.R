@@ -59,7 +59,7 @@ shinyServer(function(input, output, session) {
       passwordInput("uiPassword", "Password:"),
       textOutput('warning'),
       tags$head(tags$style("#warning{color: red;}")),
-      footer = tagList(hidden(actionButton("forgotPass", "Forgot your password?", style = "float:left")), actionButton("ok", "Login"))
+      footer = tagList(actionButton("forgotPass", "Forgot your password?", style = "float:left"), actionButton("ok", "Login"))
     )
   }
   
@@ -159,7 +159,6 @@ shinyServer(function(input, output, session) {
     
     #If result is 1 row long the user is authenticated
     if (nrow(rs) == 1) {
-      print("Logged In")
       currentUser <<- rs
       getShotResults()
       Logged <<- TRUE
@@ -393,8 +392,7 @@ shinyServer(function(input, output, session) {
       rsevent <- dbGetQuery(conn, query)
       
       latestEventid <<- rsevent$eventid
-      print(latestEventid)
-      
+     
       playersInEvent <<- input$playersInEvent
       for (player in input$playersInEvent){
         query <- paste0(
@@ -406,8 +404,6 @@ shinyServer(function(input, output, session) {
                               accountid = player, 
                               eventid = latestEventid)
         dbSendUpdate(conn, sql)
-        
-        print(paste("insert", player, latestEventid ,sep=" "))
       }
       
       lastnames <-
@@ -495,7 +491,7 @@ shinyServer(function(input, output, session) {
     rs <- dbGetQuery(conn, sql)
     
     playersInEvent <<- rs$accountid
-    print(rs)
+    (rs)
     renderPublicEvent()
     #session$reload()
     #shinyjs::reset("playerSelect")
@@ -649,7 +645,7 @@ shinyServer(function(input, output, session) {
     birthday = toString(birthday)
     teamid   = as.numeric(teamid)
     
-    print(password)
+    
     
     if (input$useremail != "") {
       query <- paste0(
@@ -663,7 +659,7 @@ shinyServer(function(input, output, session) {
           @PHONE = ?phone,
           @TEAMID = ?teamid"
       )
-      print(query)
+      
       sql <- sqlInterpolate(conn, query, 
                             email = email, 
                             pass = password, 
@@ -703,8 +699,7 @@ shinyServer(function(input, output, session) {
   ##############################################################
   
   checkData <- function() {
-    print(currentUser$role)
-    query <- paste0(
+        query <- paste0(
       "exec GETPLAYER 
       @TEAMID = ?teamid"
     )
@@ -1019,7 +1014,7 @@ shinyServer(function(input, output, session) {
   }
   
   renderPublicEvent <- function() {
-    print(paste("latest event: ", latestEventid))
+    
     query <- paste0(
       "exec GETLASTEVENT"
     )
@@ -1210,7 +1205,6 @@ shinyServer(function(input, output, session) {
   makePdf <- function(){
    
     pdf("pdfdata.pdf",width=7,height=5, title = "Graph", onefile= T)
-    print(savedPdf)
     dev.off()
   }
   
@@ -1226,6 +1220,8 @@ shinyServer(function(input, output, session) {
   locallySavePdf <- function(pdfSave) {
     savedPdf <<- pdfSave
   }
+  
+  #########################CODE andere groep
   
   #displays just the trainings the player attended
   observeEvent(c(input$player, input$month), {
@@ -1266,7 +1262,7 @@ shinyServer(function(input, output, session) {
     #selects latest available training month 
     monthlist <- sort(monthlist, decreasing = TRUE)
     
-    print(monthlist)
+   
     
     updateSelectInput(session, "month",
                       choices = monthlist,
@@ -1284,11 +1280,7 @@ shinyServer(function(input, output, session) {
     player <- input$player
     position <- input$position
     
-    
-    #for the position selection in the UI
-    print(month)
-    print(player)
-    print(position)
+
     
     
     
@@ -1635,8 +1627,7 @@ shinyServer(function(input, output, session) {
     # detailedList2$Training <- gsub("Z", "", detailedList2$Training)
     
     
-    print(detailedList2)
-    
+
     
     output$playertable <- renderTable( spacing = "m",{detailedList2[,c(2,3,11,15,17,18,19)]}, width = "100%")
     
