@@ -19,17 +19,17 @@ options(java.parameters = "-Xmx2g")
 
 
 #driver on local pc
-#drv <- JDBC("com.microsoft.sqlserver.jdbc.SQLServerDriver", "./opt/sqljdbc/sqljdbc4-2.0.jar")
+drv <- JDBC("com.microsoft.sqlserver.jdbc.SQLServerDriver", "./opt/sqljdbc/sqljdbc4-2.0.jar")
 # on production server
 # drv <- JDBC("com.microsoft.sqlserver.jdbc.SQLServerDriver", "./opt/sqljdbc/sqljdbc4-2.0.jar")
 # on test  server
-drv <- JDBC("com.microsoft.sqlserver.jdbc.SQLServerDriver", "/opt/sqljdbc_3.0/sqljdbc4.jar")
+#drv <- JDBC("com.microsoft.sqlserver.jdbc.SQLServerDriver", "/opt/sqljdbc_3.0/sqljdbc4.jar")
 
 #connection with local server
-#conn <- dbConnect(drv, "jdbc:sqlserver://localhost;databaseName=ztrieruc001;user=basketbal;password=Password1!")
+conn <- dbConnect(drv, "jdbc:sqlserver://localhost;databaseName=ztrieruc001;user=basketbal;password=Password1!")
 
 #connection with online server
-conn <- dbConnect(drv, "jdbc:sqlserver://145.92.162.226;databaseName=ztrieruc001;user=trieruc001;password=TTBGPfqU6gsOJG")
+#conn <- dbConnect(drv, "jdbc:sqlserver://145.92.162.226;databaseName=ztrieruc001;user=trieruc001;password=TTBGPfqU6gsOJG")
 
 #positions
 positionsAll       <- c(1:14)
