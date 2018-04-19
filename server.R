@@ -1058,8 +1058,7 @@ shinyServer(function(input, output, session) {
         position <- input$sliderPosition1
       }
              if(input$staafOfLijnShotAnalyse1 == 1){
-               # The next lines are to locally save a pdf. We have not found a better way that works yet
-               # Now the actaul graph for output
+               # Save plot as variable to save and display
                barplot <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers
                                    &
                                      rsShotResult$TrainingDate <= input$shotAnalyseDate[2]
@@ -1086,18 +1085,17 @@ shinyServer(function(input, output, session) {
     else {
       rsShotResult$TrainingDate <- as.Date(rsShotResult$TrainingDate)
      # rsShotResult$TrainingDateTime <- as.Date(rsShotResult$TrainingDateTime, format = "%Y-%m-%d %H:%M:%S")
-      # The next lines are to locally save a pdf. We have not found a better way that works yet
-      teamData <- rsShotResult[as.Date(rsShotResult$TrainingDate) <= input$shotAnalyseDate[2]
+      # Teamdata for teamaverage line in graph
+      teamData <- rsShotResult[rsShotResult$TrainingDate <= input$shotAnalyseDate[2]
                                &
-                                 as.Date(rsShotResult$TrainingDate) >= input$shotAnalyseDate[1]
+                                 rsShotResult$TrainingDate >= input$shotAnalyseDate[1]
                                &
                                  rsShotResult$Position == position
-                               &
+                               & 
                                  rsShotResult$ShotType == input$typeselector1
                                , ]
       
-      
-      # Now the actaul graph for output
+      # Save plot as variable to save and display
       lineplot <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers
                                      &
                                        rsShotResult$TrainingDate <= input$shotAnalyseDate[2]
@@ -1111,9 +1109,7 @@ shinyServer(function(input, output, session) {
               aes(TrainingDateTime, ShotAverage, col = as.factor(Player_skey))) +
         geom_point() +
         geom_line(aes(group = Player_skey)) +
-        # scale_x_datetime(date_labels = "%Y-%m-%d %H:%M:%OS") +
-        stat_summary(data=teamData, fun.y="mean", geom="line", size=1, color='red') +
-        
+        stat_summary(aes(group = 1), data=teamData, fun.y="mean", geom="line", size=1, color='red') +
         xlab("TrainingDateTime") +
         scale_colour_manual(
           values = palette("default"),
