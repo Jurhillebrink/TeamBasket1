@@ -37,6 +37,7 @@ shinyServer(function(input, output, session) {
     renderPlayerInfo()
     renderHeatmap()
     renderAnalyses()
+    renderHeatmapJur()
   })
   
   #Method to render after logging in
@@ -44,7 +45,8 @@ shinyServer(function(input, output, session) {
     renderPlayerInfo()
     renderLastEvent()
     renderHeatmap()
-    renderAnalyses()
+    renderAnalyses
+    renderHeatmapJur()
   }
   
   savedPdf <<- NULL
@@ -750,7 +752,13 @@ shinyServer(function(input, output, session) {
                "IPP Dashboard",
                tabName = "performance",
                icon = icon("dribbble")
-             )
+             ),
+            menuSubItem(
+              "heatmapjur",
+              tabName = "heatmapgoer",
+              icon = icon("dribbble")
+            )
+            
             
           ), 
           tags$div(
@@ -1199,6 +1207,79 @@ shinyServer(function(input, output, session) {
         labs(x = "", y = "", fill = "")
     })
   }
+  
+
+  
+  #RENDER HEATMAP FOR COACHES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  #RENDER HEATMAP FOR COACHES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  #RENDER HEATMAP FOR COACHES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  renderHeatmapJur <- function(){
+
+    # print(input$goerDate[2])
+    # print(input$goerDate[1])
+    # print(input$typeselector2)
+    teamData <- rsShotResult[as.Date(rsShotResult$TrainingDate) <= input$goerDate[2]
+                             &
+                               as.Date(rsShotResult$TrainingDate) >= input$goerDate[1]
+                             &
+                               rsShotResult$ShotType == input$typeselector2
+                             , ]
+
+    
+     output$heatMapJurIsLekker <- renderPlot({
+
+       library(dplyr)
+       resultPerPosition <- group_by(teamData, Position)
+       resultPerPosition <- summarize(resultPerPosition, meanposition = round(mean(ShotAverage)))
+  
+     
+      names(resultPerPosition)[1] <- "positions"# rename so it can be merged
+      resultPerPosition <-
+        merge(positionLocations, resultPerPosition, by = "positions") # merge with position locations
+      
+      print('nu met cordi')  
+      print(resultPerPosition)
+
+      # resultPerPosition <-
+      #   resultPerPosition[rep(row.names(resultPerPosition),
+      #                         resultPerPosition$percentage),] # repeat amount of percentage to create heat on that point
+
+      image <- png::readPNG("www/field2.png")
+      ggplot(resultPerPosition,
+             aes(x = locationX,
+                 y = locationY,
+                 fill = meanposition)) +
+        guides(alpha = 0.4, size = FALSE) +
+        annotation_custom(rasterGrob(
+          image,
+          width = unit(1, "npc"),
+          height = unit(1, "npc")
+        ),-Inf,
+        Inf,
+        -Inf,
+        Inf) +
+        scale_fill_gradientn(
+          colors = c("steelblue", "blue", "hotpink"),
+          labels = NULL,
+          name = ""
+        ) +
+        theme(
+          aspect.ratio = 0.673,
+          axis.title.x = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank()
+        ) +
+        coord_fixed(ylim = c(0, 100), xlim = c(0, 100)) +
+        xlim(c(-10, 110)) +
+        ylim(c(-10, 110)) +
+        labs(x = "", y = "", fill = "") +
+        geom_text(label=paste0(round(resultPerPosition$meanposition, digits = 0),'%'), size=12)
+
+    })
+     
+  }
+  
+  #END!!!!!!!!!!!!!!!!!!!!
   
   # get all results
   getShotResults <- function(x){
