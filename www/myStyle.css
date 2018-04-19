@@ -13,3 +13,8 @@
                       background-color: #F07D00;
                     }
 
+.box.box-solid.box-primary>.box-header {
+              color:white;
+              background:#F07D00
+              }
+

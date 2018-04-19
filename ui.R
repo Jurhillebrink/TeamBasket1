@@ -73,9 +73,6 @@ dashboardUI <<- fluidPage(
                         ),
                   
                   
-                  
-                  
-                  
                     actionButton('switchtab', 'Start event')
                   ))),
           # the actual shot event page
@@ -99,7 +96,7 @@ dashboardUI <<- fluidPage(
                         src = "field.png",
                         align = "center",
                         usemap = "#nameMap",
-                        height = "300px",
+                        height = "200px",
                         width = "300px"
                         
                       ),
@@ -167,9 +164,11 @@ dashboardUI <<- fluidPage(
                                actionButton("succeed_plus","", icon=icon("plus"))
                         )
                       ),
-                      actionButton("insertShotbtn", "Save")
+                      actionButton("insertShotbtn", "Save"), hidden(img(id ="vinkje", src= "vink.jpg", height = "20px", width = "30px" ))
                     )
                   )),
+          
+          
           # admin input page
           tabItem(tabName = "admin",
                   uiOutput('admin_input')),
@@ -182,6 +181,7 @@ dashboardUI <<- fluidPage(
                     #input and filter options for the graph
                     box(
                       width = 12,
+                      
                       selectizeInput(
                         "shotAnalysePlayers",
                         "Players",
@@ -196,22 +196,59 @@ dashboardUI <<- fluidPage(
                         end = format(Sys.Date(), format = "%Y-%m-%d")
                       ),
                       
-                      selectInput(
-                        "shotAnalysePosition", "Shot position:",
-                                  c(1:14)
+                      #type of shot
+                      radioGroupButtons(inputId = "typeselector1", 
+                                        label = "Type", 
+                                        status = "danger",
+                                        choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
+                                        selected = "catch_throw"),
+                      #map selector
+                      img(
+                        id = "fieldImage1",
+                        src = "field.png",
+                        align = "center",
+                        usemap = "#nameMap1",
+                        height = "200px",
+                        width = "300px"
+                        
                       ),
+                      tags$map( id = "imageMaps1", name= "nameMap1",
+                                tags$area( name="location1", shape="rect", coords="7,6,255,593", href="http://www.image-maps.com/1"),
+                                tags$area( name="location6", shape="rect", coords="1448,7,1696,594", href="http://www.image-maps.com/6"),
+                                tags$area( name="location2", shape="rect", coords="258,6,577,353", href="http://www.image-maps.com/2"),
+                                tags$area( name="location5", shape="rect", coords="1126,6,1445,353", href="http://www.image-maps.com/5"),
+                                tags$area( name="location3", shape="rect", coords="579,7,849,354", href="http://www.image-maps.com/3"),
+                                tags$area( name="location4", shape="rect", coords="854,6,1124,353", href="http://www.image-maps.com/4"),
+                                tags$area( name="location8", shape="rect", coords="579,354,849,701", href="http://www.image-maps.com/8"),
+                                tags$area( name="location9", shape="rect", coords="853,353,1123,700", href="http://www.image-maps.com/9"),
+                                tags$area( name="location7", shape="poly", coords="259,357,259,596,288,652,323,703,361,752,388,778,426,815,478,852,532,886,576,905,576,356,577,355,261,355", href="http://www.image-maps.com/7"),
+                                tags$area( name="location10", shape="poly", coords="1126,352,1447,353,1446,593,1423,638,1397,682,1376,708,1349,742,1308,784,1267,820,1212,858,1163,887,1127,904", href="http://www.image-maps.com/10"),
+                                tags$area( name="location11", shape="poly", coords="578,701,579,907,628,927,687,944,744,955,808,961,856,964,924,957,990,948,1064,929,1110,913,1125,908,1124,699", href="http://www.image-maps.com/11"),
+                                tags$area( name="location12", shape="poly", coords="6,597,256,597,286,652,312,692,331,719,363,756,393,786,428,819,469,849,510,873,554,897,578,908,578,1142,4,1140", href="http://www.image-maps.com/12"),
+                                tags$area( name="location13", shape="poly", coords="579,909,577,1141,1124,1141,1122,907,1083,923,1041,937,994,948,951,956,912,961,867,962,818,963,765,957,712,948,655,935,610,923", href="http://www.image-maps.com/13"),
+                                tags$area( name="location14", shape="poly", coords="1124,906,1124,1140,1696,1140,1697,596,1446,595,1432,621,1411,660,1383,700,1350,740,1318,775,1280,811,1238,844,1183,879", href="http://www.image-maps.com/14")
+                      ),
+                      hidden(
+                        textInput("sliderPosition1", '', value= 1, width = NULL, placeholder = NULL)
+                      ),
+                      tags$style(
+                        HTML(
+                          ".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar {background: #485563}"
+                        )
+                      )
                       
-                      selectInput("shotAnalyseShotType", "Type of shot",
-                                  setNames(c("free_throw","catch_throw","dribble"),c("Free throw", "Catch & Shoot", "From dribble")))
+                      
+                      
                     ), #end of box
                     #the bar chart
                     box(width = 12,
                         plotOutput("shotAnalyse")
-                        )),
+                        ),
                     box(width = 2, radioButtons("staafOfLijnShotAnalyse1", label = NULL,choices = list("Bar" = 1, "Line" = 2
                     ),selected = 1, inline = TRUE), style = "float:left"),
-                  downloadButton("pdfButton", "Generate PDF", style = "float:right")
-                  ),
+                    downloadButton("pdfButton", "Generate PDF", style = "float:right")
+                  )),
+          
           #home page of a player
           tabItem(
             tabName = "homePlayer",
@@ -227,12 +264,195 @@ dashboardUI <<- fluidPage(
             box(width = 12,
                 title = "Teammate contact info",
                 tableOutput('teammates'))
-          ), 
-          tabItem(
-            tabName = "lastEventCoach",
-            fluidPage(
-              uiOutput('last_event_coach'))
-          )
+           )
+          ,
+          tabItem(tabName = "performance",
+
+
+                  fluidRow(
+                    column(width = 12,
+                           align="center",
+                           box(width = NULL,
+                               titlePanel("Individual Player Performance Dashboard"),
+                               h5("Dashboard Developer: Basketball Team 2")
+
+
+
+                           ))
+
+
+
+                  ),
+
+
+                  fluidRow(
+                    column ( width = 3,
+                             box(width = NULL, status="primary", solidHeader = TRUE,
+                                 title = (span(tagList(icon("filter")), "Selection")),
+
+                                 h4(span(tagList(icon("filter")), "Select player")),
+                                 selectizeInput('player', "", choices = shots$Fullname, selected = TRUE),
+                                 br(),
+
+                                 h4(span(tagList(icon("filter")), "Select month")),
+                                 selectInput("month","", ""),
+                                 br(),
+
+                                 div(style="display:inline-block",h4(span(tagList(icon("filter")), "Select position"))), div(style="display:inline-block", actionLink("positionInfo", span(tagList(icon("question-circle"))))),
+                                 tags$style(type='text/css', ".selectize-input { font-size: 14px; line-height: 14px;} .selectize-dropdown { font-size: 14px; line-height: 14px; }
+                                            .modal-header {background-color: #F07D00; color: white; align: center; border-top-left-radius: 6px; border-top-right-radius: 6px}
+
+                                            "),
+
+                                 selectInput("position","", shots$Position, selected = shots$Position)
+
+                                 )),
+                    column ( width = 9,
+
+                             box(width = NULL, status="primary", solidHeader = TRUE,
+                                 title = (span(tagList(icon("crosshairs")), "Overview")),
+                                 br(),
+                                 align = "left",
+                                 valueBoxOutput("playeraverage"),
+                                 valueBoxOutput("teamaverage"),
+                                 valueBoxOutput("differenceavg")
+
+
+
+
+                             )
+
+
+
+
+                    )
+                    #input and filter options for the graph
+
+
+                    ),
+
+
+
+                  fluidRow(
+
+                    column ( width = 12,
+                             align="center",
+                             box( width = NULL, status="primary", solidHeader = TRUE, collapsible = TRUE,
+                                  title = (span(tagList(icon("line-chart")), "Training results")),
+                                  titlePanel(span(tagList(icon("line-chart")), "Training results ")),
+
+                                  plotlyOutput("performance"),
+                                  br(),
+                                  downloadLink("playerreport", "Export to PDF")
+
+
+                             )
+
+                    )
+
+                  ),
+
+                  fluidRow(
+                    column(width = 6,
+                           align = "center",
+                           box(width = NULL, status = "primary", solidHeader = TRUE, collapsible = TRUE,
+                               title = (span(tagList(icon("table")), "Training statistics")),
+                               uiOutput("icon"),
+                               titlePanel(span(tagList(icon("table")), "Training statistics")),
+                               br(),
+                               tableOutput('playertable'),
+                               downloadLink("downloadCsv", "Export to CSV")
+                           )
+                    ),
+                    column (width = 6,
+                            box(width = NULL, status="primary", solidHeader = TRUE, collapsible = TRUE,
+                                title=(span(tagList(icon("info-circle")), "Monthly facts")),
+                                align="center",
+                                titlePanel(span(tagList(icon("info-circle")), "Player statistics")),
+                                valueBoxOutput("totalshots"),
+                                valueBoxOutput("shotsmade"),
+                                valueBoxOutput("shotsmissed"),
+                                titlePanel(span(tagList(icon("info-circle")), "Team statistics")),
+                                valueBoxOutput("totalshotsgroup"),
+                                valueBoxOutput("shotsmadegroup"),
+                                valueBoxOutput("shotsmissedgroup"),
+                                titlePanel(span(tagList(icon("info-circle")),"Contribution")),
+                                valueBoxOutput("playertakendif"),
+                                valueBoxOutput("playermadedif"),
+                                valueBoxOutput("playermisseddif"),
+                                br(),
+                                br()
+
+
+                            ))
+
+                  ),
+
+                  fluidRow(
+                    column(width =12,
+                           box(width = NULL, status="primary", solidHeader = TRUE, collapsible = TRUE,
+                               title = (span(tagList(icon("bar-chart")), "Head to head")),
+                               titlePanel(span(tagList(icon("bar-chart")),"Head to head")),
+                               h4("Player versus Players"),
+                               plotOutput("bar"),
+                               br(),
+                               downloadLink('playervsplayers', "Export to PDF"))
+
+                    )),
+
+                  fluidRow(
+                    column(width = 12,
+                           align="center",
+                           box(width = NULL, status="primary", solidHeader = TRUE, collapsible = TRUE,
+                               title = (span(tagList(icon("line-chart")),"Monthly leaderboards visualized")),
+                               titlePanel(span(tagList(icon("line-chart")), "Monthly Leaderboards visualized")),
+                               plotlyOutput("leaderboard")
+                               #  downloadLink("leaderboardgraph", "Export to PDF")
+
+
+                           ))),
+
+
+
+                  fluidRow(
+
+                    column(width = 6,
+                           align = "center",
+                           box(width = NULL, status = "primary", solidHeader = TRUE, collapsible = TRUE,
+                               title = (span(tagList(icon("thumbs-up")),"Monthly Leaderboards")),
+                               titlePanel(span(tagList(icon("thumbs-up")), "Top ranked players")),
+                               h5("Players above team average"),
+                               br(),
+                               tableOutput('topplayertable'),
+                               downloadLink("downloadCsv2", "Export to CSV")
+                           )
+                    ),
+                    column(width = 6,
+                           align = "center",
+                           box(width = NULL, status = "primary", solidHeader = TRUE, collapsible = TRUE,
+                               title = (span(tagList(icon("thumbs-down")),"Monthly Leaderboards")),
+                               titlePanel(span(tagList(icon("thumbs-down")), "Bottom ranked players")),
+                               h5("Players below team average"),
+                               br(),
+                               tableOutput('bottomplayertable'),
+                               downloadLink("downloadCsv3", "Export to CSV")
+                           )
+                    )
+
+
+
+
+                  )
+
+
+                  )
+          
+          #, 
+          # tabItem(
+          #   tabName = "lastEventCoach",
+          #   fluidPage(
+          #     uiOutput('last_event_coach'))
+          # )
         )
       )
   )

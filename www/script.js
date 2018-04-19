@@ -17,6 +17,7 @@ $(document).on('shiny:visualchange', function(event) {
 });
 
 
+
 $( document ).ready(function() {
   
   
@@ -163,3 +164,127 @@ function resize() {
     }
     image.mapster('resize',newWidth,newHeight,0);   
 }
+
+
+
+// testtest
+//
+//
+//
+//
+//
+$( document ).ready(function() {
+  
+  
+    $.getScript('mapster.js', function(){
+      $('#fieldImage1').mapster(
+      {
+          fillOpacity: 0.50,
+          fillColor: "#f92c2c",
+          stroke: true,
+          strokeColor: "red",
+          strokeOpacity: 0.8,
+          singleSelect: true,
+          scaleMap: true,
+          mapKey: 'name',
+          listKey: 'name',
+          onClick: function (e) {
+              var keyValue = e.key;
+              keyValue = keyValue.replace("location", "");
+              // if Asparagus selected, change the tooltip
+              keyValue = parseInt(keyValue);
+              document.getElementById("sliderPosition1").value = keyValue;
+              $("#sliderPosition1").val(keyValue); 
+              Shiny.onInputChange("sliderPosition1", keyValue);
+              
+          },
+          showToolTip: false,
+          toolTipClose: ["tooltip-click", "area-click"],
+          areas: [
+              {
+                  key: "location1",
+                  fillColor: "f92c2c",
+                  selected: true
+              },
+              {
+                  key: "location2",
+                  fillColor: "f92c2c"
+              },
+              {
+                  key: "location3",
+                  fillColor: "f92c2c"
+              },
+              {
+                  key: "location4",
+                  fillColor: "f92c2c"
+              },
+              {
+                  key: "location5",
+                  strokeColor: "f92c2c",
+                  fillColor: "f92c2c"
+              },{
+                  key: "location6",
+                  strokeColor: "f92c2c",
+                  fillColor: "f92c2c"
+              },
+              {
+                  key: "location7",
+                  strokeColor: "f92c2c",
+                  fillColor: "f92c2c"
+              },
+              {
+                  key: "location8",
+                  strokeColor: "f92c2c",
+                  fillColor: "f92c2c"
+              },
+              {
+                  key: "location9",
+                  strokeColor: "f92c2c",
+                  fillColor: "f92c2c"
+              },
+              {
+                  key: "location10",
+                  strokeColor: "f92c2c",
+                  fillColor: "f92c2c"
+              },
+              {
+                  key: "location11",
+                  strokeColor: "f92c2c",
+                  fillColor: "f92c2c"
+              },
+              {
+                  key: "location12",
+                  strokeColor: "f92c2c",
+                  fillColor: "f92c2c"
+              },
+              {
+                  key: "location13",
+                  strokeColor: "f92c2c",
+                  fillColor: "f92c2c"
+              },
+              {
+                  key: "location14",
+                  strokeColor: "f92c2c",
+                  fillColor: "f92c2c"
+              }
+              ]
+      });
+      
+    })
+    
+    $("#typeselector1").click(function(){
+      //alert($("#typeselector:checked").val());
+      setTimeout(function() {
+        if($('input[name=typeselector1]:checked').val() == "free_throw"){
+           $('#fieldImage1').css("opacity", 1);
+           //$("option:selected").removeAttr("selected");
+        }else{
+          $('#fieldImage1').css("opacity", 0.2);
+          //$("option:selected").removeAttr("selected");
+        }
+      }, 250);
+    })
+    
+    
+});
+
