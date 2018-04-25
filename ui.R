@@ -719,7 +719,7 @@ playerHomeLayout <<- function(user){
       radioGroupButtons(inputId = "typeselectorHomeGraph", 
                         label = "Type", 
                         status = "danger",
-                        choices = setNames(c("free_throw","catch_shoot","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
+                        choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
                         selected = "catch_shoot"),
       #plot graph
       fluidRow(
@@ -735,5 +735,4 @@ playerHomeLayout <<- function(user){
 
 renderTrainingSelector <<- function(x){
   return(selectInput("trainingselector", "Training", x, selected = 1))
-
   }
