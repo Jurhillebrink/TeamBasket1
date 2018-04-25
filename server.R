@@ -1058,12 +1058,93 @@ shinyServer(function(input, output, session) {
   # coach analysis
   renderAnalyses <- function(){
     # make plot
+    
+    teamData <- rsShotResult[as.Date(rsShotResult$TrainingDate) <= input$shotAnalyseDate[2]
+                             &
+                               as.Date(rsShotResult$TrainingDate) >= input$shotAnalyseDate[1]
+                             &
+                               rsShotResult$ShotType == input$typeselector1
+                             , ]
+    
+    
+    # output$heatMapJurIsLekker <- renderPlot({
+    
+    library(dplyr)
+    resultPerPosition <- group_by(teamData, Position)
+    resultPerPosition <- summarize(resultPerPosition, meanposition = round(mean(ShotAverage)))
+    
+    
+    names(resultPerPosition)[1] <- "positions"# rename so it can be merged
+    resultPerPosition <-
+      merge(positionLocations, resultPerPosition, by = "positions") # merge with position locations
+    
+    print('nu met cordi')  
+    print(resultPerPosition)
+    
+    # resultPerPosition <-
+    #   resultPerPosition[rep(row.names(resultPerPosition),
+    #                         resultPerPosition$percentage),] # repeat amount of percentage to create heat on that point
+    
+    image <- png::readPNG("www/field2.png")
+    jurplot <- ggplot(resultPerPosition,
+                      aes(x = locationX,
+                          y = locationY,
+                          fill = meanposition)) +
+      guides(alpha = 0.4, size = FALSE) +
+      annotation_custom(rasterGrob(
+        image,
+        width = unit(1, "npc"),
+        height = unit(1, "npc")
+      ),-Inf,
+      Inf,
+      -Inf,
+      Inf) +
+      scale_fill_gradientn(
+        colors = c("steelblue", "blue", "hotpink"),
+        labels = NULL,
+        name = ""
+      ) +
+      theme(
+        aspect.ratio = 0.673,
+        axis.title.x = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank()
+      ) +
+      coord_fixed(ylim = c(0, 100), xlim = c(0, 100)) +
+      xlim(c(-10, 110)) +
+      ylim(c(-10, 110)) +
+      labs(x = "", y = "", fill = "") +
+      geom_text(label=paste0(round(resultPerPosition$meanposition, digits = 0),'%'), size=25)
+    
+    # })
 
+    
+    output$fieldImage1 <- renderImage({
+      # A temp file to save the output.
+      # This file will be removed later by renderImage
+      #outfile <- tempfile("jur", fileext = '.png')
+      
+      # Generate the PNG1703 x 1146
+      png("www\\jur2.png", width = 1703, height = 1146)
+      plot(jurplot)
+      dev.off()
+      
+      list(src = "www\\jur2.png",
+           contentType = 'image/png',
+           id="fieldImage1",
+           width = 300,
+           height = 200,
+           align = "center",
+           usemap = "#nameMap1")
+      
+    },deleteFile = TRUE)
+    
       output$shotAnalyse <- renderPlot({
       if(input$typeselector1 == "free_throw"){
         position <- 0
       } else{
         position <- input$sliderPosition1
+        
       }
              if(input$staafOfLijnShotAnalyse1 == 1){
                # The next lines are to locally save a pdf. We have not found a better way that works yet
@@ -1215,9 +1296,6 @@ shinyServer(function(input, output, session) {
   #RENDER HEATMAP FOR COACHES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   renderHeatmapJur <- function(){
 
-    # print(input$goerDate[2])
-    # print(input$goerDate[1])
-    # print(input$typeselector2)
     teamData <- rsShotResult[as.Date(rsShotResult$TrainingDate) <= input$goerDate[2]
                              &
                                as.Date(rsShotResult$TrainingDate) >= input$goerDate[1]
@@ -1226,7 +1304,7 @@ shinyServer(function(input, output, session) {
                              , ]
 
     
-     output$heatMapJurIsLekker <- renderPlot({
+     # output$heatMapJurIsLekker <- renderPlot({
 
        library(dplyr)
        resultPerPosition <- group_by(teamData, Position)
@@ -1245,7 +1323,7 @@ shinyServer(function(input, output, session) {
       #                         resultPerPosition$percentage),] # repeat amount of percentage to create heat on that point
 
       image <- png::readPNG("www/field2.png")
-      ggplot(resultPerPosition,
+      jurplot <- ggplot(resultPerPosition,
              aes(x = locationX,
                  y = locationY,
                  fill = meanposition)) +
@@ -1273,10 +1351,23 @@ shinyServer(function(input, output, session) {
         xlim(c(-10, 110)) +
         ylim(c(-10, 110)) +
         labs(x = "", y = "", fill = "") +
-        geom_text(label=paste0(round(resultPerPosition$meanposition, digits = 0),'%'), size=12)
+        geom_text(label=paste0(round(resultPerPosition$meanposition, digits = 0),'%'), size=25)
 
-    })
+    # })
      
+      output$myImage <- renderImage({
+        # A temp file to save the output.
+        # This file will be removed later by renderImage
+        #outfile <- tempfile("jur", fileext = '.png')
+          
+        # Generate the PNG1703 x 1146
+        png("www\\teampercentage.png", width = 1703, height = 1146)
+        plot(jurplot)
+        dev.off()
+        
+      })
+      
+      
   }
   
   #END!!!!!!!!!!!!!!!!!!!!
