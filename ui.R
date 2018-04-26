@@ -204,8 +204,9 @@ dashboardUI <<- fluidPage(
                                         choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
                                         selected = "catch_throw"),
                       #map selector
-                      imageOutput("fieldImage1"),
-
+                      uiOutput("test1"),
+                      
+                      #map
                       tags$map( id = "imageMaps1", name= "nameMap1",
                                 tags$area( name="location1", shape="rect", coords="7,6,255,593", href="http://www.image-maps.com/1"),
                                 tags$area( name="location6", shape="rect", coords="1448,7,1696,594", href="http://www.image-maps.com/6"),
