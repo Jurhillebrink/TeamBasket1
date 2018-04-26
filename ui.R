@@ -88,7 +88,7 @@ dashboardUI <<- fluidPage(
                       radioGroupButtons(inputId = "typeselector", 
                                         label = "Type", 
                                         status = "danger",
-                                        choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
+                                        choices = setNames(c("free_throw","catch_throw","dribble", "extra_knop1"),c("Free throw","Catch & Shoot", "From dribble", "extra_knop1")),
                                         selected = "catch_throw"),
                       #map selector
                       img(
@@ -200,7 +200,7 @@ dashboardUI <<- fluidPage(
                       radioGroupButtons(inputId = "typeselector1", 
                                         label = "Type", 
                                         status = "danger",
-                                        choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
+                                        choices = setNames(c("free_throw","catch_throw","dribble", "extra_knop1"),c("Free throw","Catch & Shoot", "From dribble", "extra_knop1")),
                                         selected = "catch_throw"),
                       #map selector
                       img(
@@ -711,7 +711,11 @@ playerHomeLayout <<- function(user){
         box(width = 4,
             title = "Catch & Shoot",
             h1(textOutput("catchShootPercentage")),
-            h3(textOutput("catchShootCount")))
+            h3(textOutput("catchShootCount"))),
+        box(width = 4,
+            title = "extra_knop1",
+            h1(textOutput("extra_knop1Percentage")),
+            h3(textOutput("extra_knop1Count")))
       ),
       # compare to the team.
       h4("Compare to your team"),
@@ -719,7 +723,7 @@ playerHomeLayout <<- function(user){
       radioGroupButtons(inputId = "typeselectorHomeGraph", 
                         label = "Type", 
                         status = "danger",
-                        choices = setNames(c("free_throw","catch_shoot","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
+                        choices = setNames(c("free_throw","catch_shoot","dribble", "extra_knop1"),c("Free throw","Catch & Shoot", "From dribble", "extra_knop1")),
                         selected = "catch_shoot"),
       #plot graph
       fluidRow(
