@@ -472,10 +472,10 @@ heatmapUiLayout <<- function(x){
       # makes the heat maps play over time
       sliderTextInput(
         inputId = "heatMapSlider", 
-        label = "Select event:", 
+        label = "Select date:", 
         grid = TRUE, 
         force_edges = TRUE,
-        choices = unique(substr(eventsOfPlayer$starttime,1,7)),
+        choices = x,
         animate=TRUE
       )
     )
@@ -705,22 +705,16 @@ playerHomeLayout <<- function(user){
             h1(textOutput("freeThrowPercentage")),
             h3(textOutput("freeThrowCount"))),
         box(width = 4,
-            title = "Dribble",
-            h1(textOutput("dribblePercentage")),
-            h3(textOutput("dribbleCount"))),
-        box(width = 4,
             title = "Catch & Shoot",
             h1(textOutput("catchShootPercentage")),
-            h3(textOutput("catchShootCount")))
+            h3(textOutput("catchShootCount"))),
+        box(width = 4,
+            title = "Dribble",
+            h1(textOutput("dribblePercentage")),
+            h3(textOutput("dribbleCount")))
       ),
       # compare to the team.
       h4("Compare to your team"),
-      # selec type of shot
-      radioGroupButtons(inputId = "typeselectorHomeGraph", 
-                        label = "Type", 
-                        status = "danger",
-                        choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
-                        selected = "catch_shoot"),
       #plot graph
       fluidRow(
         box(

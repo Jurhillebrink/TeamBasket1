@@ -991,14 +991,18 @@ shinyServer(function(input, output, session) {
       percentageDribbleTeam <- round(mean(rsShotResult[rsShotResult$TrainingDateTime == input$trainingselector & rsShotResult$ShotType == "dribble" & rsShotResult$FirstName != currentUser$firstname & rsShotResult$LastName != currentUser$lastname,]$ShotAverage), digits = 0)
       percentageCatchShootTeam <- round(mean(rsShotResult[rsShotResult$TrainingDateTime == input$trainingselector & rsShotResult$ShotType == "catch_throw" & rsShotResult$FirstName != currentUser$firstname & rsShotResult$LastName != currentUser$lastname,]$ShotAverage), digits = 0)
       
-      playerPercentage <- c(percentageFreeThrowTeam, percentageCatchShootPlayer, percentageDribblePlayer)
+      playerPercentage <- c(percentageFreeThrowPlayer, percentageCatchShootPlayer, percentageDribblePlayer)
       teamPercentage <- c(percentageFreeThrowTeam,  percentageCatchShootTeam, percentageDribbleTeam)
-      dataFramePlayer <- data.frame(playerPercentage, teamPercentage)
-      row.names(dataFramePlayer) <- c("Free throw", "Catch & Shoot", "From dribble")
-      ggplot(dataFramePlayer,
-             aes(x = playerPercentage,
-                 y = teamPercentage)) +
-        geom_bar(stat = "identity", position = "dodge")
+      dataFramePlayer <- data.frame(teamPlayer=rep(c("Player", "Team"), each=3),
+                                           shotType=rep(c("Free throw", "Catch & Shoot", "From dribble"),2),
+                                           shotPercentage=c(playerPercentage, teamPercentage)) 
+      #order
+      dataFramePlayer$shotType<- factor(dataFramePlayer$shotType, levels=c("Free throw", "Catch & Shoot", "From dribble"))
+      #plot
+      ggplot(data=dataFramePlayer, aes(x=shotType, y=shotPercentage, fill=teamPlayer)) +
+        geom_bar(stat="identity", position=position_dodge()) + 
+        labs(fill = '', x = "Shot Type", y = "Shot Percentage")
+        
       
     })
 
@@ -1048,7 +1052,13 @@ shinyServer(function(input, output, session) {
   #RENDER THE HEATMAP PAGE
   renderHeatMap <- function() {
     output$heatmap_player <- renderUI({
-      heatmapUiLayout(eventsofPlayer)
+      allTrainingOfPlayer <- rsShotResult[rsShotResult$FirstName == currentUser$firstname & rsShotResult$LastName == currentUser$lastname, ]
+      allTrainingOfPlayerDate <- allTrainingOfPlayer %>% distinct(TrainingDateTime)
+      allTrainingOfPlayerDate <- as.vector(
+        allTrainingOfPlayerDate
+      )
+      
+      heatmapUiLayout(allTrainingOfPlayerDate)
     })
   }
   
@@ -1139,38 +1149,24 @@ shinyServer(function(input, output, session) {
   # render the heatmap
   renderHeatmap <- function(){
     output$heatMapPlayer <- renderPlot({
-      #make dataset
-      resultPerPosition <-
-        with(eventsOfPlayer, aggregate(
-          list(
-            totalTaken = as.integer(value2),
-            totalMade  = as.integer(value)
-          ),
-          list(
-            value3    = value3,
-            yearMonth = substr(starttime,1,7)
-          ),
-          sum
-        ))
-            resultPerPosition$percentage <-
-        ((
-          as.integer(resultPerPosition$totalMade) / as.integer(resultPerPosition$totalTaken)
-        ) * 100) # calculate percentage
-      names(resultPerPosition)[1] <- "positions"# rename so it can be merged
-      resultPerPosition <-
-        merge(positionLocations, resultPerPosition, by = "positions") # merge with position locations
+      allTrainingOfPlayer <- rsShotResult[rsShotResult$FirstName == currentUser$firstname & rsShotResult$LastName == currentUser$lastname & rsShotResult$ShotType != "free_throw", ]
+      allTrainingOfPlayerDate <- allTrainingOfPlayer %>% distinct(TrainingDateTime)    
       
-      resultPerPosition <- resultPerPosition[resultPerPosition$yearMonth == input$heatMapSlider,]
+      #"2017-12-13 08:00:00"
+      resultPerPosition <- allTrainingOfPlayer[allTrainingOfPlayer$TrainingDateTime == "2017-12-13 08:00:00",]
       
-      resultPerPosition <-
-        resultPerPosition[rep(row.names(resultPerPosition),
-                              resultPerPosition$percentage),] # repeat amount of percentage to create heat on that point
+      
+      
+      # resultPerPosition <-
+      #   resultPerPosition[rep(row.names(resultPerPosition),
+      #                          each = 4),] # repeat amount of percentage to create heat on that point
+      print(resultPerPosition)
       
       image <- png::readPNG("www/field.png")
       ggplot(resultPerPosition,
              aes(x = locationX,
                  y = locationY,
-                 fill = percentage)) +
+                 fill = shotAverage)) +
         guides(alpha = 0.4, size = FALSE) +
         annotation_custom(rasterGrob(
           image,
