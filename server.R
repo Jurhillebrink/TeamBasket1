@@ -267,8 +267,8 @@ shinyServer(function(input, output, session) {
   
   #Add the values to the modal dialog
   confirminputrender <- function(){
-    titles <- c("Free throw","Catch & Shoot", "From dribble")
-    values <- c("free_throw","catch_shoot","dribble")
+    titles <- c("Free throw","Catch & Shoot", "From dribble", "extra_knop1")
+    values <- c("free_throw","catch_shoot","dribble", "extra_knop1")
     df <- data.frame(x = values,
     y = titles)
     
@@ -962,6 +962,18 @@ shinyServer(function(input, output, session) {
     output$catchThrowCount <- renderText({
       takenshots <- toString(sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "catch_shoot", ]$value), na.rm = TRUE))
       madeshots  <- toString(sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "catch_shoot" ,]$value2), na.rm = TRUE))
+      paste(takenshots, "/", madeshots , sep = "")
+    })
+    
+    output$catchThrowPercentage <- renderText({
+      made  <- sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "extra_knop1" ,]$value), na.rm = TRUE)
+      taken <- sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "extra_knop1", ]$value2), na.rm = TRUE)
+      percentage <- as.integer((made / taken) * 100)
+      paste(percentage, "%", sep = "")
+    })
+    output$catchThrowCount <- renderText({
+      takenshots <- toString(sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "extra_knop1", ]$value), na.rm = TRUE))
+      madeshots  <- toString(sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "extra_knop1" ,]$value2), na.rm = TRUE))
       paste(takenshots, "/", madeshots , sep = "")
     })
     
