@@ -1119,7 +1119,9 @@ shinyServer(function(input, output, session) {
     # })
 
     
-    output$fieldImage1 <- renderImage({
+    output$testjur <- renderImage({
+      tags$head(tags$script(src = "mapster.js"))
+      tags$head(tags$script(src = "script.js"))
       # A temp file to save the output.
       # This file will be removed later by renderImage
       #outfile <- tempfile("jur", fileext = '.png')
@@ -1129,9 +1131,8 @@ shinyServer(function(input, output, session) {
       plot(jurplot)
       dev.off()
       
-      list(src = "www\\jur2.png",
+      list(id = "fieldImage1", src = "www\\jur2.png",
            contentType = 'image/png',
-           id="fieldImage1",
            width = 300,
            height = 200,
            align = "center",
