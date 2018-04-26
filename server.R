@@ -982,15 +982,23 @@ shinyServer(function(input, output, session) {
       if(is.nan(percentageDribblePlayer)){
         percentageDribblePlayer <- 0
       }
-      percentageCatchShoot <- round(mean(allTrainingOfPlayer[allTrainingOfPlayer$TrainingDateTime == input$trainingselector & allTrainingOfPlayer$ShotType == "catch_throw",]$ShotAverage), digits = 0)
-      if(is.nan(percentageCatchShoot)){
-        percentageCatchShoot <- 0
+      percentageCatchShootPlayer <- round(mean(allTrainingOfPlayer[allTrainingOfPlayer$TrainingDateTime == input$trainingselector & allTrainingOfPlayer$ShotType == "catch_throw",]$ShotAverage), digits = 0)
+      if(is.nan(percentageCatchShootPlayer)){
+        percentageCatchShootPlayer <- 0
       }
       #gemiddelde van team
       percentageFreeThrowTeam <- round(mean(rsShotResult[rsShotResult$TrainingDateTime == input$trainingselector & rsShotResult$ShotType == "free_throw" & rsShotResult$FirstName != currentUser$firstname & rsShotResult$LastName != currentUser$lastname,]$ShotAverage), digits = 0)
       percentageDribbleTeam <- round(mean(rsShotResult[rsShotResult$TrainingDateTime == input$trainingselector & rsShotResult$ShotType == "dribble" & rsShotResult$FirstName != currentUser$firstname & rsShotResult$LastName != currentUser$lastname,]$ShotAverage), digits = 0)
       percentageCatchShootTeam <- round(mean(rsShotResult[rsShotResult$TrainingDateTime == input$trainingselector & rsShotResult$ShotType == "catch_throw" & rsShotResult$FirstName != currentUser$firstname & rsShotResult$LastName != currentUser$lastname,]$ShotAverage), digits = 0)
       
+      playerPercentage <- c(percentageFreeThrowTeam, percentageCatchShootPlayer, percentageDribblePlayer)
+      teamPercentage <- c(percentageFreeThrowTeam,  percentageCatchShootTeam, percentageDribbleTeam)
+      dataFramePlayer <- data.frame(playerPercentage, teamPercentage)
+      row.names(dataFramePlayer) <- c("Free throw", "Catch & Shoot", "From dribble")
+      ggplot(dataFramePlayer,
+             aes(x = playerPercentage,
+                 y = teamPercentage)) +
+        geom_bar(stat = "identity", position = "dodge")
       
     })
 
