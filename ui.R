@@ -88,7 +88,7 @@ dashboardUI <<- fluidPage(
                       radioGroupButtons(inputId = "typeselector", 
                                         label = "Type", 
                                         status = "danger",
-                                        choices = setNames(c("free_throw","catch_throw","dribble", "extra_knop1"),c("Free throw","Catch & Shoot", "From dribble", "extra_knop1")),
+                                        choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
                                         selected = "catch_throw"),
                       #map selector
                       img(
@@ -181,7 +181,20 @@ dashboardUI <<- fluidPage(
                     #input and filter options for the graph
                     box(
                       width = 12,
-                      
+                      selectizeInput(
+                        "shotAnalyseSeason",
+                        "Season",
+                        c(sort(unique(rsShotResult$SeasonText), TRUE)),
+                        multiple = TRUE
+                      ),
+                      uiOutput("shotAnalyseTeam"),
+                      # selectizeInput(
+                      #   "shotAnalyseTeam",
+                      #   "Team",
+                      #   c(sort(rsShotResult[rsShotResult$SeasonText] in input$shotAnalyseSeason, TRUE)),
+                      #   selected = allPlayers[1, "Playername"],
+                      #   multiple = TRUE
+                      # ),
                       selectizeInput(
                         "shotAnalysePlayers",
                         "Players",
@@ -200,7 +213,7 @@ dashboardUI <<- fluidPage(
                       radioGroupButtons(inputId = "typeselector1", 
                                         label = "Type", 
                                         status = "danger",
-                                        choices = setNames(c("free_throw","catch_throw","dribble", "extra_knop1"),c("Free throw","Catch & Shoot", "From dribble", "extra_knop1")),
+                                        choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
                                         selected = "catch_throw"),
                       #map selector
                       img(
@@ -711,11 +724,7 @@ playerHomeLayout <<- function(user){
         box(width = 4,
             title = "Catch & Shoot",
             h1(textOutput("catchShootPercentage")),
-            h3(textOutput("catchShootCount"))),
-        box(width = 4,
-            title = "extra_knop1",
-            h1(textOutput("extra_knop1Percentage")),
-            h3(textOutput("extra_knop1Count")))
+            h3(textOutput("catchShootCount")))
       ),
       # compare to the team.
       h4("Compare to your team"),
@@ -723,7 +732,7 @@ playerHomeLayout <<- function(user){
       radioGroupButtons(inputId = "typeselectorHomeGraph", 
                         label = "Type", 
                         status = "danger",
-                        choices = setNames(c("free_throw","catch_shoot","dribble", "extra_knop1"),c("Free throw","Catch & Shoot", "From dribble", "extra_knop1")),
+                        choices = setNames(c("free_throw","catch_shoot","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
                         selected = "catch_shoot"),
       #plot graph
       fluidRow(

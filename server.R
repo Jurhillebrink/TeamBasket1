@@ -1060,6 +1060,26 @@ shinyServer(function(input, output, session) {
   }
   
   # coach analysis
+  output$shotAnalyseTeam <- renderUI({
+    # selectInput("User", "Date:", choices = as.character(dat5[dat5$email==input$Select,"date"])),
+    # selectizeInput(
+    #     "shotAnalyseTeam",
+    #     "Team",
+    #     c(sort(rsShotResult[rsShotResult$SeasonText] in input$shotAnalyseSeason, TRUE)),
+    #     selected = allPlayers[1, "Playername"],
+    #     multiple = TRUE
+    #   )
+    rsShotResultSub <- rsShotResult[rsShotResult$SeasonText %in% input$shotAnalyseSeason,]
+    selectizeInput(
+      "shotAnalyseTeam",
+      "Team",
+      c(sort(unique(rsShotResultSub$TeamName), TRUE)),
+      multiple = TRUE
+      # $SeasonText
+      # rsShotResult[rsShotResult$SeasonText == input$shotAnalyseSeason,]
+    )
+  })
+  
   renderAnalyses <- function(){
     # make plot
 
@@ -1688,7 +1708,9 @@ shinyServer(function(input, output, session) {
     ))
   })
   
-  
+  output$slider <- renderUI({
+    sliderInput(inputId = "B", label = "B", min = 0, max = 2*input$A, value = 5)
+  })
   
   
 
