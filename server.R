@@ -1062,23 +1062,23 @@ shinyServer(function(input, output, session) {
   # coach analysis
   # Team
   output$shotAnalyseTeam <- renderUI({
-    rsShotResultSub <<- rsShotResult[rsShotResult$SeasonText %in% input$shotAnalyseSeason,]
+    rsShotResult <- rsShotResult[rsShotResult$SeasonText %in% input$shotAnalyseSeason,]
     selectizeInput(
       "shotAnalyseTeam",
       "Team",
-      c(sort(unique(rsShotResultSub$TeamName), TRUE)),
+      c(sort(unique(rsShotResult$TeamName), TRUE)),
       multiple = TRUE
     )
   })
   
   # Players
-  output$shotAnalysePlayers2 <- renderUI({
+  output$shotAnalysePlayers <- renderUI({
 
-    rsShotResultSubPlayers <<- rsShotResultSub[rsShotResultSub$TeamName %in% input$shotAnalyseTeam,]
+    rsShotResult <- rsShotResult[rsShotResult$TeamName %in% input$shotAnalyseTeam,]
     selectizeInput(
-      "shotAnalysePlayers2",
-      "Players2",
-      c(sort(unique(rsShotResultSubPlayers$Fullname), FALSE)),
+      "shotAnalysePlayers",
+      "Players",
+      c(sort(unique(rsShotResult$Fullname), FALSE)),
       multiple = TRUE
     )
   })

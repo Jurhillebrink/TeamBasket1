@@ -190,14 +190,16 @@ dashboardUI <<- fluidPage(
                       # Input for selecting team
                       uiOutput("shotAnalyseTeam"),
                       # Input for selecting players
-                      uiOutput("shotAnalysePlayers2"),
-                      selectizeInput(
-                        "shotAnalysePlayers",
-                        "Players",
-                        c(allPlayers$full),
-                        selected = allPlayers[1, "Playername"],
-                        multiple = TRUE
-                      ),
+                      uiOutput("shotAnalysePlayers"),
+                      # selectizeInput( 
+                      #   "shotAnalysePlayers", 
+                      #   +
+                      #     "Players", 
+                      #   c(allPlayers$full), 
+                      #   selected = allPlayers[1, "Playername"], 
+                      #   multiple = TRUE 
+                      # ),
+                      
                       dateRangeInput(
                         'shotAnalyseDate',
                         label = 'Date range input: yyyy-mm-dd',
