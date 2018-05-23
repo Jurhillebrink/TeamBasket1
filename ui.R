@@ -187,14 +187,10 @@ dashboardUI <<- fluidPage(
                         c(sort(unique(rsShotResult$SeasonText), TRUE)),
                         multiple = TRUE
                       ),
+                      # Input for selecting team
                       uiOutput("shotAnalyseTeam"),
-                      # selectizeInput(
-                      #   "shotAnalyseTeam",
-                      #   "Team",
-                      #   c(sort(rsShotResult[rsShotResult$SeasonText] in input$shotAnalyseSeason, TRUE)),
-                      #   selected = allPlayers[1, "Playername"],
-                      #   multiple = TRUE
-                      # ),
+                      # Input for selecting players
+                      uiOutput("shotAnalysePlayers2"),
                       selectizeInput(
                         "shotAnalysePlayers",
                         "Players",

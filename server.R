@@ -1060,23 +1060,26 @@ shinyServer(function(input, output, session) {
   }
   
   # coach analysis
+  # Team
   output$shotAnalyseTeam <- renderUI({
-    # selectInput("User", "Date:", choices = as.character(dat5[dat5$email==input$Select,"date"])),
-    # selectizeInput(
-    #     "shotAnalyseTeam",
-    #     "Team",
-    #     c(sort(rsShotResult[rsShotResult$SeasonText] in input$shotAnalyseSeason, TRUE)),
-    #     selected = allPlayers[1, "Playername"],
-    #     multiple = TRUE
-    #   )
-    rsShotResultSub <- rsShotResult[rsShotResult$SeasonText %in% input$shotAnalyseSeason,]
+    rsShotResultSub <<- rsShotResult[rsShotResult$SeasonText %in% input$shotAnalyseSeason,]
     selectizeInput(
       "shotAnalyseTeam",
       "Team",
       c(sort(unique(rsShotResultSub$TeamName), TRUE)),
       multiple = TRUE
-      # $SeasonText
-      # rsShotResult[rsShotResult$SeasonText == input$shotAnalyseSeason,]
+    )
+  })
+  
+  # Players
+  output$shotAnalysePlayers2 <- renderUI({
+
+    rsShotResultSubPlayers <<- rsShotResultSub[rsShotResultSub$TeamName %in% input$shotAnalyseTeam,]
+    selectizeInput(
+      "shotAnalysePlayers2",
+      "Players2",
+      c(sort(unique(rsShotResultSubPlayers$Fullname), FALSE)),
+      multiple = TRUE
     )
   })
   
