@@ -1167,10 +1167,11 @@ shinyServer(function(input, output, session) {
           ".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar {background: #485563}"
         )
       )
+      runjs()
     })
     
     #########################################
-    runjs()
+    
     
       output$shotAnalyse <- renderPlot({
       if(input$typeselector1 == "free_throw"){

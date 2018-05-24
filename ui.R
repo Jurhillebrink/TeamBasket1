@@ -204,16 +204,18 @@ dashboardUI <<- fluidPage(
                                         choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
                                         selected = "catch_throw"),
                       #map selector
-                      #uiOutput("test1"),
+                      uiOutput("test1"),
                       #uiOutput("test2")
                       #map
                       img(
                         id = "fieldImage1",
                         src = "field.png",
-                        align = "center",
+                        align = "right",
                         usemap = "#nameMap1",
                         height = "200px",
                         width = "300px"
+                        
+                        
                         
                       ),
                       tags$map( id = "imageMaps1", name= "nameMap1",
@@ -234,12 +236,12 @@ dashboardUI <<- fluidPage(
                       ),
                       hidden(
                         textInput("sliderPosition1", '', value= 1, width = NULL, placeholder = NULL)
-                      ),
-                      tags$style(
-                        HTML(
-                          ".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar {background: #485563}"
-                        )
-                      )
+                       )#,
+                      # tags$style(
+                      #   HTML(
+                      #     ".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar {background: #485563}"
+                      #   )
+                      #)
                       
                       
                       
