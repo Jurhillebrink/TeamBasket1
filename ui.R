@@ -249,7 +249,6 @@ dashboardUI <<- fluidPage(
                     #input and filter options for the graph
                     box(
                       width = 12,
-                      
                       selectizeInput(
                         "shotAnalysePlayers",
                         "Players",
@@ -270,17 +269,20 @@ dashboardUI <<- fluidPage(
                                         status = "danger",
                                         choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
                                         selected = "catch_throw"),
+                      
                       #map selector
-                      uiOutput("test1"),
+                      uiOutput("test1", style = "height:20px;"),
                       #uiOutput("test2")
                       #map
-                      img(
+                      
+                      tags$img(
                         id = "fieldImage1",
-                        src = "field.png",
-                        align = "right",
+                        src = "doorzichtig.png",
                         usemap = "#nameMap1",
-                        height = "200px",
-                        width = "300px"
+                        opacity = "0.0",
+                        class= "jurislekker"
+                        
+
                         
                         
                         

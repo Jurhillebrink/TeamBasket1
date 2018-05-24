@@ -1134,8 +1134,11 @@ shinyServer(function(input, output, session) {
              contentType = 'image/png',
              width = 300,
              height = 200,
-             align = "center",
+             #align = "center",
+        
              usemap = "#nameMap1")
+        
+        
         
       },deleteFile = TRUE), id = "fieldImage1")})
     
