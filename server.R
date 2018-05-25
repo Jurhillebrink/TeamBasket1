@@ -1075,10 +1075,15 @@ shinyServer(function(input, output, session) {
   output$shotAnalysePlayers <- renderUI({
 
     rsShotResult <- rsShotResult[rsShotResult$TeamName %in% input$shotAnalyseTeam,]
+    Players <- sort(unique(rsShotResult$Fullname), FALSE)
+    # Sort players by last name
+    Players <- data.frame(Players) %>%
+      arrange(gsub(".*\\s", "", Players))
+    
     selectizeInput(
       "shotAnalysePlayers",
       "Players",
-      c(sort(unique(rsShotResult$Fullname), FALSE)),
+      Players,
       multiple = TRUE
     )
   })
