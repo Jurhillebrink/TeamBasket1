@@ -1085,7 +1085,7 @@ shinyServer(function(input, output, session) {
     #                         resultPerPosition$percentage),] # repeat amount of percentage to create heat on that point
     
     image <- png::readPNG("www/field.png")
-    jurplot <- ggplot(resultPerPosition,
+    shotpercentagePlot <- ggplot(resultPerPosition,
                       aes(x = locationX,
                           y = locationY,
                           fill = meanposition)) +
@@ -1123,7 +1123,7 @@ shinyServer(function(input, output, session) {
         
         # Generate the PNG1703 x 1146
         png("www\\shotpercentage.png", width = 1703, height = 1146)
-        plot(jurplot)
+        plot(shotpercentagePlot)
         dev.off()
         
         list(src = "www\\shotpercentage.png",
