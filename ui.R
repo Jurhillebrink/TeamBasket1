@@ -270,10 +270,8 @@ dashboardUI <<- fluidPage(
                                         choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
                                         selected = "catch_throw"),
                       
-                      #map selector
-                      uiOutput("test1", style = "height:20px;"),
-                      #uiOutput("test2")
-                      #map
+                      #Render shotpercentage
+                      uiOutput("shotpercentage", style = "height:20px;"),
                       
                       tags$img(
                         id = "fieldImage1",
@@ -281,10 +279,7 @@ dashboardUI <<- fluidPage(
                         usemap = "#nameMap1",
                         opacity = "0.0",
                         class= "jurislekker"
-                        
-
-                        
-                        
+ 
                         
                       ),
                       tags$map( id = "imageMaps1", name= "nameMap1",

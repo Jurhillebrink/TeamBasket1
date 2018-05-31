@@ -1084,7 +1084,7 @@ shinyServer(function(input, output, session) {
     #   resultPerPosition[rep(row.names(resultPerPosition),
     #                         resultPerPosition$percentage),] # repeat amount of percentage to create heat on that point
     
-    image <- png::readPNG("www/field2.png")
+    image <- png::readPNG("www/field.png")
     jurplot <- ggplot(resultPerPosition,
                       aes(x = locationX,
                           y = locationY,
@@ -1118,63 +1118,21 @@ shinyServer(function(input, output, session) {
     # })
 
     ################################renderui test
-    output$test1 <- renderUI({
+    output$shotpercentage <- renderUI({
       img(renderImage({
         
-        # A temp file to save the output.
-        # This file will be removed later by renderImage
-        #outfile <- tempfile("jur", fileext = '.png')
-        
         # Generate the PNG1703 x 1146
-        png("www\\jur2.png", width = 1703, height = 1146)
+        png("www\\shotpercentage.png", width = 1703, height = 1146)
         plot(jurplot)
         dev.off()
         
-        list(src = "www\\jur2.png",
+        list(src = "www\\shotpercentage.png",
              contentType = 'image/png',
-             width = 300,
-             height = 200,
-             #align = "center",
-        
+             width = 309,
+             height = 204,
              usemap = "#nameMap1")
         
-        
-        
       },deleteFile = TRUE), id = "fieldImage1")})
-    
-    
-    output$test2 <- renderPrint({
-      tags$head(tags$script(src = "mapster.js"))
-      tags$head(tags$script(src = "script.js"))
-      tags$map( id = "imageMaps1", name= "nameMap1",
-                tags$area( name="location1", shape="rect", coords="7,6,255,593", href="http://www.image-maps.com/1"),
-                tags$area( name="location6", shape="rect", coords="1448,7,1696,594", href="http://www.image-maps.com/6"),
-                tags$area( name="location2", shape="rect", coords="258,6,577,353", href="http://www.image-maps.com/2"),
-                tags$area( name="location5", shape="rect", coords="1126,6,1445,353", href="http://www.image-maps.com/5"),
-                tags$area( name="location3", shape="rect", coords="579,7,849,354", href="http://www.image-maps.com/3"),
-                tags$area( name="location4", shape="rect", coords="854,6,1124,353", href="http://www.image-maps.com/4"),
-                tags$area( name="location8", shape="rect", coords="579,354,849,701", href="http://www.image-maps.com/8"),
-                tags$area( name="location9", shape="rect", coords="853,353,1123,700", href="http://www.image-maps.com/9"),
-                tags$area( name="location7", shape="poly", coords="259,357,259,596,288,652,323,703,361,752,388,778,426,815,478,852,532,886,576,905,576,356,577,355,261,355", href="http://www.image-maps.com/7"),
-                tags$area( name="location10", shape="poly", coords="1126,352,1447,353,1446,593,1423,638,1397,682,1376,708,1349,742,1308,784,1267,820,1212,858,1163,887,1127,904", href="http://www.image-maps.com/10"),
-                tags$area( name="location11", shape="poly", coords="578,701,579,907,628,927,687,944,744,955,808,961,856,964,924,957,990,948,1064,929,1110,913,1125,908,1124,699", href="http://www.image-maps.com/11"),
-                tags$area( name="location12", shape="poly", coords="6,597,256,597,286,652,312,692,331,719,363,756,393,786,428,819,469,849,510,873,554,897,578,908,578,1142,4,1140", href="http://www.image-maps.com/12"),
-                tags$area( name="location13", shape="poly", coords="579,909,577,1141,1124,1141,1122,907,1083,923,1041,937,994,948,951,956,912,961,867,962,818,963,765,957,712,948,655,935,610,923", href="http://www.image-maps.com/13"),
-                tags$area( name="location14", shape="poly", coords="1124,906,1124,1140,1696,1140,1697,596,1446,595,1432,621,1411,660,1383,700,1350,740,1318,775,1280,811,1238,844,1183,879", href="http://www.image-maps.com/14")
-      )
-      hidden(
-        textInput("sliderPosition1", '', value= 1, width = NULL, placeholder = NULL)
-      )
-      tags$style(
-        HTML(
-          ".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar {background: #485563}"
-        )
-      )
-      runjs()
-    })
-    
-    #########################################
-    
     
       output$shotAnalyse <- renderPlot({
       if(input$typeselector1 == "free_throw"){
@@ -1255,125 +1213,6 @@ shinyServer(function(input, output, session) {
     }
     })
       
-  }
-  
-  runjs <- function(){
-    jsCode <- "$( document ).ready(function() {
-  
-    
-    $.getScript('mapster.js', function(){
-    $('#fieldImage1').mapster(
-    {
-    fillOpacity: 0.50,
-    fillColor: '#f92c2c',
-    stroke: true,
-    strokeColor: 'red',
-    strokeOpacity: 0.8,
-    singleSelect: true,
-    scaleMap: true,
-    mapKey: 'name',
-    listKey: 'name',
-    onClick: function (e) {
-    var keyValue = e.key;
-    keyValue = keyValue.replace('location', '');
-    // if Asparagus selected, change the tooltip
-    keyValue = parseInt(keyValue);
-    document.getElementById('sliderPosition1').value = keyValue;
-    $('#sliderPosition1').val(keyValue); 
-    Shiny.onInputChange('sliderPosition1', keyValue);
-    
-    },
-    showToolTip: false,
-    toolTipClose: ['tooltip-click', 'area-click'],
-    areas: [
-    {
-    key: 'location1',
-    fillColor: 'f92c2c',
-    selected: true
-    },
-    {
-    key: 'location2',
-    fillColor: 'f92c2c'
-    },
-    {
-    key: 'location3',
-    fillColor: 'f92c2c'
-    },
-    {
-    key: 'location4',
-    fillColor: 'f92c2c'
-    },
-    {
-    key: 'location5',
-    strokeColor: 'f92c2c',
-    fillColor: 'f92c2c'
-    },{
-    key: 'location6',
-    strokeColor: 'f92c2c',
-    fillColor: 'f92c2c'
-    },
-    {
-    key: 'location7',
-    strokeColor: 'f92c2c',
-    fillColor: 'f92c2c'
-    },
-    {
-    key: 'location8',
-    strokeColor: 'f92c2c',
-    fillColor: 'f92c2c'
-    },
-    {
-    key: 'location9',
-    strokeColor: 'f92c2c',
-    fillColor: 'f92c2c'
-    },
-    {
-    key: 'location10',
-    strokeColor: 'f92c2c',
-    fillColor: 'f92c2c'
-    },
-    {
-    key: 'location11',
-    strokeColor: 'f92c2c',
-    fillColor: 'f92c2c'
-    },
-    {
-    key: 'location12',
-    strokeColor: 'f92c2c',
-    fillColor: 'f92c2c'
-    },
-    {
-    key: 'location13',
-    strokeColor: 'f92c2c',
-    fillColor: 'f92c2c'
-    },
-    {
-    key: 'location14',
-    strokeColor: 'f92c2c',
-    fillColor: 'f92c2c'
-    }
-    ]
-    });
-    
-    })
-    
-    $('#typeselector1').click(function(){
-    //alert($('#typeselector:checked').val());
-    setTimeout(function() {
-    if($('input[name=typeselector1]:checked').val() == 'free_throw'){
-    $('#fieldImage1').css('opacity', 1);
-    //$('option:selected').removeAttr('selected');
-    }else{
-    $('#fieldImage1').css('opacity', 0.2);
-    //$('option:selected').removeAttr('selected');
-    }
-    }, 250);
-  })
-    
-    
-});
-    
-    "
   }
   
   # render the heatmap
