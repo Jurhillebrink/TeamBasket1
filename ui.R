@@ -177,73 +177,6 @@ dashboardUI <<- fluidPage(
                   uiOutput('playerEvent')),
           #shot analysis page for coaches
           
-          tabItem(tabName = "heatmapgoer",
-                  fluidRow(
-                    #input and filter options for the graph
-                    box(
-                      width = 12,
-                      
-                      selectizeInput(
-                        "goerPlayers",
-                        "Players",
-                        c(allPlayers$full),
-                        selected = allPlayers[1, "Playername"],
-                        multiple = TRUE
-                      ),
-                      dateRangeInput(
-                        'goerDate',
-                        label = 'Date range input: yyyy-mm-dd',
-                        start = "2017-03-12",
-                        end = format(Sys.Date(), format = "%Y-%m-%d")
-                      ),
-                      
-                      #type of shot
-                      radioGroupButtons(inputId = "typeselector2", 
-                                        label = "Type", 
-                                        status = "danger",
-                                        choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
-                                        selected = "catch_throw"),
-                      #map selector
-                      img(
-                        id = "fieldImage2",
-                        src = "field.png",
-                        align = "center",
-                        usemap = "#nameMap2",
-                        height = "200px",
-                        width = "300px"
-                        
-                      ),
-                      tags$map( id = "imageMaps2", name= "nameMap2",
-                                tags$area( name="location1", shape="rect", coords="7,6,255,593", href="http://www.image-maps.com/1"),
-                                tags$area( name="location6", shape="rect", coords="1448,7,1696,594", href="http://www.image-maps.com/6"),
-                                tags$area( name="location2", shape="rect", coords="258,6,577,353", href="http://www.image-maps.com/2"),
-                                tags$area( name="location5", shape="rect", coords="1126,6,1445,353", href="http://www.image-maps.com/5"),
-                                tags$area( name="location3", shape="rect", coords="579,7,849,354", href="http://www.image-maps.com/3"),
-                                tags$area( name="location4", shape="rect", coords="854,6,1124,353", href="http://www.image-maps.com/4"),
-                                tags$area( name="location8", shape="rect", coords="579,354,849,701", href="http://www.image-maps.com/8"),
-                                tags$area( name="location9", shape="rect", coords="853,353,1123,700", href="http://www.image-maps.com/9"),
-                                tags$area( name="location7", shape="poly", coords="259,357,259,596,288,652,323,703,361,752,388,778,426,815,478,852,532,886,576,905,576,356,577,355,261,355", href="http://www.image-maps.com/7"),
-                                tags$area( name="location10", shape="poly", coords="1126,352,1447,353,1446,593,1423,638,1397,682,1376,708,1349,742,1308,784,1267,820,1212,858,1163,887,1127,904", href="http://www.image-maps.com/10"),
-                                tags$area( name="location11", shape="poly", coords="578,701,579,907,628,927,687,944,744,955,808,961,856,964,924,957,990,948,1064,929,1110,913,1125,908,1124,699", href="http://www.image-maps.com/11"),
-                                tags$area( name="location12", shape="poly", coords="6,597,256,597,286,652,312,692,331,719,363,756,393,786,428,819,469,849,510,873,554,897,578,908,578,1142,4,1140", href="http://www.image-maps.com/12"),
-                                tags$area( name="location13", shape="poly", coords="579,909,577,1141,1124,1141,1122,907,1083,923,1041,937,994,948,951,956,912,961,867,962,818,963,765,957,712,948,655,935,610,923", href="http://www.image-maps.com/13"),
-                                tags$area( name="location14", shape="poly", coords="1124,906,1124,1140,1696,1140,1697,596,1446,595,1432,621,1411,660,1383,700,1350,740,1318,775,1280,811,1238,844,1183,879", href="http://www.image-maps.com/14")
-                      ),
-                      tags$style(
-                        HTML(
-                          ".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar {background: #485563}"
-                        )
-                      )
-                    ),
-                    box(
-                      sliderInput("obs", "Number of observations:",
-                                  min = 0, max = 1000,  value = 500),
-                        imageOutput("myImage")
-                    )
-                    
-                  )),   
-          
-          
           tabItem(tabName = "shotAnalyse",
                   fluidRow(
                     #input and filter options for the graph
@@ -272,16 +205,17 @@ dashboardUI <<- fluidPage(
                       
                       #Render shotpercentage
                       uiOutput("shotpercentage", style = "height:20px;"),
-                      
-                      tags$img(
+
+                      #map selector
+                      img(
                         id = "fieldImage1",
                         src = "doorzichtig.png",
+                        align = "center",
                         usemap = "#nameMap1",
-                        opacity = "0.0",
-                        class= "jurislekker"
- 
+                        class= "shotPercentage"
                         
                       ),
+                      
                       tags$map( id = "imageMaps1", name= "nameMap1",
                                 tags$area( name="location1", shape="rect", coords="7,6,255,593", href="http://www.image-maps.com/1"),
                                 tags$area( name="location6", shape="rect", coords="1448,7,1696,594", href="http://www.image-maps.com/6"),

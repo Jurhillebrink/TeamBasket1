@@ -1084,7 +1084,7 @@ shinyServer(function(input, output, session) {
     #   resultPerPosition[rep(row.names(resultPerPosition),
     #                         resultPerPosition$percentage),] # repeat amount of percentage to create heat on that point
     
-    image <- png::readPNG("www/field.png")
+    image <- png::readPNG("www/field1.png")
     shotpercentagePlot <- ggplot(resultPerPosition,
                       aes(x = locationX,
                           y = locationY,
@@ -1129,10 +1129,9 @@ shinyServer(function(input, output, session) {
         list(src = "www\\shotpercentage.png",
              contentType = 'image/png',
              width = 309,
-             height = 204,
-             usemap = "#nameMap1")
+             height = 204)
         
-      },deleteFile = TRUE), id = "fieldImage1")})
+      },deleteFile = TRUE))})
     
       output$shotAnalyse <- renderPlot({
       if(input$typeselector1 == "free_throw"){
