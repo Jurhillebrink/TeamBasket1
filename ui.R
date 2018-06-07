@@ -176,6 +176,7 @@ dashboardUI <<- fluidPage(
           tabItem(tabName = "playerEvent",
                   uiOutput('playerEvent')),
           #shot analysis page for coaches
+          
           tabItem(tabName = "shotAnalyse",
                   fluidRow(
                     #input and filter options for the graph
@@ -213,16 +214,20 @@ dashboardUI <<- fluidPage(
                                         status = "danger",
                                         choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
                                         selected = "catch_throw"),
+                      
+                      #Render shotpercentage
+                      uiOutput("shotpercentage", style = "height:20px;"),
+
                       #map selector
                       img(
                         id = "fieldImage1",
-                        src = "field.png",
+                        src = "doorzichtig.png",
                         align = "center",
                         usemap = "#nameMap1",
-                        height = "200px",
-                        width = "300px"
+                        class= "shotPercentage"
                         
                       ),
+                      
                       tags$map( id = "imageMaps1", name= "nameMap1",
                                 tags$area( name="location1", shape="rect", coords="7,6,255,593", href="http://www.image-maps.com/1"),
                                 tags$area( name="location6", shape="rect", coords="1448,7,1696,594", href="http://www.image-maps.com/6"),
@@ -241,12 +246,13 @@ dashboardUI <<- fluidPage(
                       ),
                       hidden(
                         textInput("sliderPosition1", '', value= 1, width = NULL, placeholder = NULL)
-                      ),
-                      tags$style(
-                        HTML(
-                          ".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar {background: #485563}"
-                        )
-                      )
+                       )#,
+                      # tags$style(
+                      #   HTML(
+                      #     ".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar {background: #485563}"
+                      #   )
+                      #)
+                      
                       
                       
                       
@@ -278,23 +284,14 @@ dashboardUI <<- fluidPage(
            )
           ,
           tabItem(tabName = "performance",
-
-
                   fluidRow(
                     column(width = 12,
                            align="center",
                            box(width = NULL,
                                titlePanel("Individual Player Performance Dashboard"),
                                h5("Dashboard Developer: Basketball Team 2")
-
-
-
                            ))
-
-
-
                   ),
-
 
                   fluidRow(
                     column ( width = 3,
@@ -327,22 +324,13 @@ dashboardUI <<- fluidPage(
                                  valueBoxOutput("playeraverage"),
                                  valueBoxOutput("teamaverage"),
                                  valueBoxOutput("differenceavg")
-
-
-
-
-                             )
-
-
-
+                         )
 
                     )
                     #input and filter options for the graph
 
 
                     ),
-
-
 
                   fluidRow(
 
@@ -355,10 +343,7 @@ dashboardUI <<- fluidPage(
                                   plotlyOutput("performance"),
                                   br(),
                                   downloadLink("playerreport", "Export to PDF")
-
-
                              )
-
                     )
 
                   ),
@@ -393,12 +378,8 @@ dashboardUI <<- fluidPage(
                                 valueBoxOutput("playermisseddif"),
                                 br(),
                                 br()
-
-
                             ))
-
                   ),
-
                   fluidRow(
                     column(width =12,
                            box(width = NULL, status="primary", solidHeader = TRUE, collapsible = TRUE,
@@ -408,9 +389,7 @@ dashboardUI <<- fluidPage(
                                plotOutput("bar"),
                                br(),
                                downloadLink('playervsplayers', "Export to PDF"))
-
                     )),
-
                   fluidRow(
                     column(width = 12,
                            align="center",
@@ -419,14 +398,8 @@ dashboardUI <<- fluidPage(
                                titlePanel(span(tagList(icon("line-chart")), "Monthly Leaderboards visualized")),
                                plotlyOutput("leaderboard")
                                #  downloadLink("leaderboardgraph", "Export to PDF")
-
-
                            ))),
-
-
-
                   fluidRow(
-
                     column(width = 6,
                            align = "center",
                            box(width = NULL, status = "primary", solidHeader = TRUE, collapsible = TRUE,
@@ -449,13 +422,7 @@ dashboardUI <<- fluidPage(
                                downloadLink("downloadCsv3", "Export to CSV")
                            )
                     )
-
-
-
-
                   )
-
-
                   )
           
           #, 
@@ -468,11 +435,9 @@ dashboardUI <<- fluidPage(
       )
   )
 )
-
 ui <<- shinyUI(
   dashboardUI
 )
-
 # returns a ui with a heatmap that plays over time
 heatmapUiLayout <<- function(x){
   return(
@@ -492,7 +457,6 @@ heatmapUiLayout <<- function(x){
     )
   )
 }
-
 #Box to select a player in a public event
 publicEventUiLayout <<- function(x){
   return(
@@ -524,8 +488,6 @@ publicEventUiLayout <<- function(x){
       # fluidRow(column(3, verbatimTextOutput("value")))
       actionButton("closeTestEvent", "End event")
 )
-      
-    
   )
 }
 
@@ -742,8 +704,6 @@ playerHomeLayout <<- function(user){
     )
   )
 }
-
-
 renderTrainingSelector <<- function(x){
   return(selectInput("trainingselector", "Training", x, selected = 1))
 
