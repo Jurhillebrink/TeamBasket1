@@ -822,21 +822,10 @@ shinyServer(function(input, output, session) {
   
   #Render the player info
   renderLastEvent <- function(){
-    # get the id of the last event
-    query <- paste0(
-      "exec GETLASTDATE"
-    )
-    sql <- sqlInterpolate(conn, query)
-    latestDate <- dbGetQuery(conn, sql)$starttime
-    
     lastDateTime <- head(rsShotResult[order(rsShotResult$TrainingDateTime , decreasing = TRUE ),],1)
     lastDateTime <- lastDateTime$TrainingDateTime
-    print(lastDateTime)
-    
-    
     eventData <- rsShotResult[rsShotResult$TrainingDateTime == lastDateTime,] # select dtata of last date
-    print(eventData)
-    
+
     # render the page
     output$last_event_coach <- renderUI({
       lastEventLayout(eventData, currentUser)
