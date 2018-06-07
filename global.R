@@ -7,6 +7,8 @@ library(DBI)
 library(shinythemes)
 library(shinydashboard)
 library(plyr)
+library(plotly)
+library(sqldf)
 
 options(java.parameters = "-Xmx2g")
 
@@ -18,9 +20,10 @@ options(java.parameters = "-Xmx2g")
 
 #driver on local pc
 drv <- JDBC("com.microsoft.sqlserver.jdbc.SQLServerDriver", "./opt/sqljdbc/sqljdbc4-2.0.jar")
-
-#driver on online server
-#drv <- JDBC("com.microsoft.sqlserver.jdbc.SQLServerDriver", "C:/999 DB/20 Mijn MSSQLserver/sqljdbc4-2.0.jar")
+# on production server
+# drv <- JDBC("com.microsoft.sqlserver.jdbc.SQLServerDriver", "./opt/sqljdbc/sqljdbc4-2.0.jar")
+# on test  server
+#drv <- JDBC("com.microsoft.sqlserver.jdbc.SQLServerDriver", "/opt/sqljdbc_3.0/sqljdbc4.jar")
 
 #connection with local server
 conn <- dbConnect(drv, "jdbc:sqlserver://localhost;databaseName=ztrieruc001;user=basketbal;password=Password1!")
@@ -64,10 +67,26 @@ getAllPlayers <- function(){
 
 getAllTeams <- function(){
   query <- paste0(
-    "exec GETTEAMLISt"
+    "exec GETTEAMLIST"
   )
   allTeams <<- dbGetQuery(conn, query)
 }
+
+query <- paste0(
+  "exec GETSHOTRESULTS_v1"
+)
+sql <- sqlInterpolate(conn, query)
+rsShotResult <<- dbGetQuery(conn, sql)
+shots <- rsShotResult
+shots$Percentage <- with(shots, shots$ShotsMade / shots$ShotsNumber * 100)
+
+shots$Month <- substr(shots$TrainingDateTime, 0, 7)
+
+playerlist <- data.frame(shots$FirstName, shots$LastName)
+shots$Fullname <- as.character(interaction(playerlist,sep=" "))
+
+currentUser <- NULL
+
 
 getAllPlayers()
 getAllTeams()

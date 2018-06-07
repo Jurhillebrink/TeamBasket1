@@ -17,6 +17,9 @@ library(openssl)
 library(shinyjs) #to hide side bar
 library(grid) # for rastergrob, to set court as background of plot
 library(mailR)
+library(plotly)
+library(tidyr)
+library(dplyr)
 
 require("DT")
 
@@ -25,7 +28,6 @@ source("./global.R")
 shinyServer(function(input, output, session) {
   #On app start
   observe({
-    getShotResults()
     #Render the UI
     renderAdmin()
     renderPublicEvent()
@@ -35,6 +37,7 @@ shinyServer(function(input, output, session) {
     renderPlayerInfo()
     renderHeatmap()
     renderAnalyses()
+    
   })
   
   #Method to render after logging in
@@ -42,7 +45,8 @@ shinyServer(function(input, output, session) {
     renderPlayerInfo()
     renderLastEvent()
     renderHeatmap()
-    renderAnalyses()
+    renderAnalyses
+   
   }
   
   savedPdf <<- NULL
@@ -157,16 +161,11 @@ shinyServer(function(input, output, session) {
     
     #If result is 1 row long the user is authenticated
     if (nrow(rs) == 1) {
-      print("Logged In")
       currentUser <<- rs
-      getShotResults()
       Logged <<- TRUE
       values$authenticated <- TRUE
       obs1$suspend()
       removeModal()
-      
-      getShotResults()
-      
       #no more warning for wrong credentials
       output$warning <-
         renderText({
@@ -179,7 +178,6 @@ shinyServer(function(input, output, session) {
     } else {
       #User not authenticated
       values$authenticated <- FALSE
-      print("Wrong Credentials")
       output$warning <-
         renderText({
           paste("Credentials are wrong")
@@ -265,8 +263,8 @@ shinyServer(function(input, output, session) {
   
   #Add the values to the modal dialog
   confirminputrender <- function(){
-    titles <- c("Free throw","Catch & Shoot", "From dribble")
-    values <- c("free_throw","catch_shoot","dribble")
+    titles <- c("Free throw","Catch & Shoot", "From dribble", "extra_knop1")
+    values <- c("free_throw","catch_shoot","dribble", "extra_knop1")
     df <- data.frame(x = values,
     y = titles)
     
@@ -291,16 +289,16 @@ shinyServer(function(input, output, session) {
     if(input$succeed <= input$total){
       
       confirminputrender()
-      
+
       showModal(confirminputmodal)
     }else {
-      showModal(
-        modalDialog(
-          title = "Invalid data.",
-          "Succeeded shots exceeded total shots.",
-          easyClose = TRUE,
-          footer = NULL
-        )
+      showModaldal(
+      modalDialog(
+        title = "Invalid data.",
+        "Succeeded shots exceeded total shots.",
+        easyClose = TRUE,
+        footer = NULL
+      )
       )
     }
     
@@ -337,16 +335,14 @@ shinyServer(function(input, output, session) {
                           type = input$typeselector)
     
     dbSendUpdate(conn, sql)
+
+    removeModal()
+    show("vinkje")
+    Sys.sleep(2)
+    hide("vinkje")
     
-    showModal(
-      modalDialog(
-        title = "Values added",
-        "The values were successfully added to the system.",
-        easyClose = TRUE,
-        footer = NULL
-      )
-    )
   })
+
   
   #On logout button click
   observeEvent(input$logoutBtn, {
@@ -393,8 +389,7 @@ shinyServer(function(input, output, session) {
       rsevent <- dbGetQuery(conn, query)
       
       latestEventid <<- rsevent$eventid
-      print(latestEventid)
-      
+     
       playersInEvent <<- input$playersInEvent
       for (player in input$playersInEvent){
         query <- paste0(
@@ -406,8 +401,6 @@ shinyServer(function(input, output, session) {
                               accountid = player, 
                               eventid = latestEventid)
         dbSendUpdate(conn, sql)
-        
-        print(paste("insert", player, latestEventid ,sep=" "))
       }
       
       lastnames <-
@@ -495,7 +488,6 @@ shinyServer(function(input, output, session) {
     rs <- dbGetQuery(conn, sql)
     
     playersInEvent <<- rs$accountid
-    print(rs)
     renderPublicEvent()
     #session$reload()
     #shinyjs::reset("playerSelect")
@@ -538,9 +530,7 @@ shinyServer(function(input, output, session) {
     
     if (nrow(rs) == 1) {
       endEvent()
-      getShotResults()
     } else {
-      print("Wrong Password")
       output$warningEvent <-
         renderText({
           paste("Wrong password")
@@ -570,12 +560,12 @@ shinyServer(function(input, output, session) {
         menuItem(
           "Analyse players",
           icon = icon("bar-chart"),
-          menuSubItem(
-            "Last event",
-            tabName = "lastEventCoach",
-            icon = icon("dribbble"),
-            selected = TRUE # direct to last event page
-          ),
+          # menuSubItem(
+          #   "Last event",
+          #   tabName = "lastEventCoach",
+          #   icon = icon("dribbble"),
+          #   selected = TRUE # direct to last event page
+          # ),
           menuSubItem(
             "Shot results",
             tabName = "shotAnalyse",
@@ -587,7 +577,6 @@ shinyServer(function(input, output, session) {
     # show menu
     shinyjs::removeClass(selector = "body", class = "sidebar-collapse")
     removeModal()
-    getShotResults()
     renderLastEvent()
   }
   
@@ -648,8 +637,7 @@ shinyServer(function(input, output, session) {
     password = toString(sha256(password, key = NULL))
     birthday = toString(birthday)
     teamid   = as.numeric(teamid)
-    
-    print(password)
+
     
     if (input$useremail != "") {
       query <- paste0(
@@ -663,7 +651,7 @@ shinyServer(function(input, output, session) {
           @PHONE = ?phone,
           @TEAMID = ?teamid"
       )
-      print(query)
+
       sql <- sqlInterpolate(conn, query, 
                             email = email, 
                             pass = password, 
@@ -703,8 +691,7 @@ shinyServer(function(input, output, session) {
   ##############################################################
   
   checkData <- function() {
-    print(currentUser$role)
-    query <- paste0(
+        query <- paste0(
       "exec GETPLAYER 
       @TEAMID = ?teamid"
     )
@@ -742,15 +729,17 @@ shinyServer(function(input, output, session) {
             "Analyse",
             icon = icon("bar-chart"),
             menuSubItem(
-              "Last event",
-              tabName = "lastEventCoach",
-              icon = icon("dribbble")
-            ),
-            menuSubItem(
               "Shot results",
               tabName = "shotAnalyse",
               icon = icon("bar-chart")
-            )
+            ), 
+            menuSubItem(
+               "IPP Dashboard",
+               tabName = "performance",
+               icon = icon("dribbble")
+             )
+            
+            
           ), 
           tags$div(
             style="margin-top:180%; bottom: 0; position: fixed;",
@@ -760,17 +749,21 @@ shinyServer(function(input, output, session) {
           )
         )
       } else if (currentUser$role == "p") {
+        #######################################Not sure if used
+        
         #User is a player
         #Get the events of the current user.
-        eventsOfPlayer     <<-
-          rsShotResult[currentUser$accountid == rsShotResult$accountid, ]
+        #eventsOfPlayer     <<-
+        #  rsShotResult[currentUser$accountid == rsShotResult$accountid, ]
         #Get all starttimes and format them
-        eventsOfPlayer$starttime <- as.POSIXct(strptime(eventsOfPlayer$starttime, "%Y-%m-%d %H:%M:%S"))
+        #eventsOfPlayer$starttime <- as.POSIXct(strptime(eventsOfPlayer$starttime, "%Y-%m-%d %H:%M:%S"))
         #order the events of the user by date
-        eventSubset <<- eventsOfPlayer[order(eventsOfPlayer$starttime, decreasing = FALSE),]
+        #eventSubset <<- eventsOfPlayer[order(eventsOfPlayer$starttime, decreasing = FALSE),]
         #Set the latest event
-        latestEvent        <<-
-          max(rsShotResult[currentUser$accountid == rsShotResult$accountid & rsShotResult$value != 0, ]$eventid, na.rm = TRUE)
+        #latestEvent        <<-
+        #  max(rsShotResult[currentUser$accountid == rsShotResult$accountid & rsShotResult$value != 0, ]$eventid, na.rm = TRUE)
+        
+        #######################################
         #Render the sidebar 
         sidebarMenu(
           tags$div(
@@ -785,14 +778,6 @@ shinyServer(function(input, output, session) {
             tabName = "homePlayer",
             icon = icon("home"),
             selected = TRUE
-          ),
-          menuItem("Analysis",
-                   icon = icon("bar-chart"),
-                   menuSubItem(
-                     "Heatmap",
-                     tabName = "heatMapPlayer",
-                     icon = icon("thermometer-3")
-                   )      
           )#,
           #menuItem(
           #  "Events",
@@ -870,7 +855,7 @@ shinyServer(function(input, output, session) {
       
       selectedPosition <- input$select_position_last_event
       if(is.null(selectedPosition)){selectedPosition = 1}
-      print(paste("selected position", selectedPosition))
+
       
       eventDataOfPosition <- eventData[eventData$value3 == selectedPosition,] # filter by selected position
       
@@ -913,87 +898,109 @@ shinyServer(function(input, output, session) {
       playerHomeLayout(currentUser)
     })
     
+    #get all data of every training of the current user
+    allTrainingOfPlayer <- rsShotResult[rsShotResult$FirstName == currentUser$firstname & rsShotResult$LastName == currentUser$lastname, ]
+    allTrainingOfPlayerDate <- allTrainingOfPlayer %>% distinct(TrainingDateTime)
+    
     #Render the select dialog for the training sessions.
     output$trainingSelectorOutput <- renderUI(
-      renderTrainingSelector(setNames(as.numeric(eventSubset$eventid),eventSubset$starttime))
+      renderTrainingSelector(allTrainingOfPlayerDate$TrainingDateTime)
     )
     
     #Render the percentage text of the free throws
     output$freeThrowPercentage <- renderText({
       #Calculate the total made free throws of the training.
-      made  <- sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "free_throw" ,]$value), na.rm = TRUE)
-      #Calculate the total taken free throws of the training.
-      taken <- sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "free_throw", ]$value2), na.rm = TRUE)
-      #Calculate the percentage based on the made and taken shots.
-      percentage <- as.integer((made / taken) * 100)
-      #Print the actual percentage with the percentage sign to the text output.
+      percentage  <- allTrainingOfPlayer[allTrainingOfPlayer$TrainingDateTime == input$trainingselector & allTrainingOfPlayer$ShotType == "free_throw",]$ShotAverage
+      if(length(percentage) == 0){
+        percentage <- 0
+      }
       paste(percentage, "%", sep = "")
     })
     
     #Render the text below the percentage with the made and taken shots.
     output$freeThrowCount <- renderText({
       #Calculate the total taken free throws of the training.
-      takenshots <- toString(sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "free_throw", ]$value), na.rm = TRUE))
+      takenshots <- allTrainingOfPlayer[allTrainingOfPlayer$TrainingDateTime == input$trainingselector & allTrainingOfPlayer$ShotType == "free_throw",]$ShotsNumber
       #Calculate the total made free throws of the training.
-      madeshots  <- toString(sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "free_throw" ,]$value2), na.rm = TRUE))
+      madeshots  <- allTrainingOfPlayer[allTrainingOfPlayer$TrainingDateTime == input$trainingselector & allTrainingOfPlayer$ShotType == "free_throw",]$ShotsMade
       #Print the actual taken shots and the made shots with a slash sign between them to the text output.
-      paste(takenshots, "/", madeshots , sep = "")
+      if(length(takenshots) == 0 && length(madeshots) == 0){
+        takenshots <- 0
+        madeshots <- 0
+      }
+      paste(madeshots, "/", takenshots , sep = "")
     })
     
     output$dribblePercentage <- renderText({
-      made  <- sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "dribble" ,]$value), na.rm = TRUE)
-      taken <- sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "dribble", ]$value2), na.rm = TRUE)
-      percentage <- as.integer((made / taken) * 100)
+      percentage <- round(mean(allTrainingOfPlayer[allTrainingOfPlayer$TrainingDateTime == input$trainingselector & allTrainingOfPlayer$ShotType == "dribble",]$ShotAverage), digits = 0)
+      if(is.nan(percentage)){
+        percentage <- 0
+      }
       paste(percentage, "%", sep = "")
     })
     output$dribbleCount <- renderText({
-      takenshots <- toString(sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "dribble", ]$value), na.rm = TRUE))
-      madeshots  <- toString(sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "dribble" ,]$value2), na.rm = TRUE))
-      paste(takenshots, "/", madeshots , sep = "")
+      takenshots <- sum(allTrainingOfPlayer[allTrainingOfPlayer$TrainingDateTime == input$trainingselector & allTrainingOfPlayer$ShotType == "dribble",]$ShotsNumber)
+      madeshots <- sum(allTrainingOfPlayer[allTrainingOfPlayer$TrainingDateTime == input$trainingselector & allTrainingOfPlayer$ShotType == "dribble",]$ShotsMade)
+      paste(madeshots, "/", takenshots , sep = "")
+    })
+    
+    output$catchShootPercentage <- renderText({
+      percentage <- round(mean(allTrainingOfPlayer[allTrainingOfPlayer$TrainingDateTime == input$trainingselector & allTrainingOfPlayer$ShotType == "catch_throw",]$ShotAverage), digits = 0)
+      if(is.nan(percentage)){
+        percentage <- 0
+      }
+      paste(percentage, "%", sep = "")
+    })
+    output$catchShootCount <- renderText({
+      takenshots <- sum(allTrainingOfPlayer[allTrainingOfPlayer$TrainingDateTime == input$trainingselector & allTrainingOfPlayer$ShotType == "catch_throw",]$ShotsNumber)
+      madeshots <- sum(allTrainingOfPlayer[allTrainingOfPlayer$TrainingDateTime == input$trainingselector & allTrainingOfPlayer$ShotType == "catch_throw",]$ShotsMade)
+      paste(madeshots, "/", takenshots , sep = "")
     })
     
     output$catchThrowPercentage <- renderText({
-      made  <- sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "catch_shoot" ,]$value), na.rm = TRUE)
-      taken <- sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "catch_shoot", ]$value2), na.rm = TRUE)
+      made  <- sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "extra_knop1" ,]$value), na.rm = TRUE)
+      taken <- sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "extra_knop1", ]$value2), na.rm = TRUE)
       percentage <- as.integer((made / taken) * 100)
       paste(percentage, "%", sep = "")
     })
     output$catchThrowCount <- renderText({
-      takenshots <- toString(sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "catch_shoot", ]$value), na.rm = TRUE))
-      madeshots  <- toString(sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "catch_shoot" ,]$value2), na.rm = TRUE))
+      takenshots <- toString(sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "extra_knop1", ]$value), na.rm = TRUE))
+      madeshots  <- toString(sum(as.integer(eventSubset[eventSubset$eventid == input$trainingselector & eventSubset$value4 == "extra_knop1" ,]$value2), na.rm = TRUE))
       paste(takenshots, "/", madeshots , sep = "")
     })
     
     output$home_graph_player <- renderPlot({
-      dataPlayerHomeGraph <- rsShotResult[rsShotResult$value4 == input$typeselectorHomeGraph, ]
-      dataPlayerHomeGraph[dataPlayerHomeGraph$accountid != currentUser$accountid,]$accountid <- 0
-      dataPlayerHomeGraph[dataPlayerHomeGraph$accountid != currentUser$accountid,]$fullname <- "Team"
+      #totaal per soort schot van speelster
+      percentageFreeThrowPlayer  <- allTrainingOfPlayer[allTrainingOfPlayer$TrainingDateTime == input$trainingselector & allTrainingOfPlayer$ShotType == "free_throw",]$ShotAverage
+      if(length(percentageFreeThrowPlayer) == 0){
+        percentageFreeThrowPlayer <- 0
+      }
+      percentageDribblePlayer <- round(mean(allTrainingOfPlayer[allTrainingOfPlayer$TrainingDateTime == input$trainingselector & allTrainingOfPlayer$ShotType == "dribble",]$ShotAverage), digits = 0)
+      if(is.nan(percentageDribblePlayer)){
+        percentageDribblePlayer <- 0
+      }
+      percentageCatchShootPlayer <- round(mean(allTrainingOfPlayer[allTrainingOfPlayer$TrainingDateTime == input$trainingselector & allTrainingOfPlayer$ShotType == "catch_throw",]$ShotAverage), digits = 0)
+      if(is.nan(percentageCatchShootPlayer)){
+        percentageCatchShootPlayer <- 0
+      }
+      #gemiddelde van team
+      percentageFreeThrowTeam <- round(mean(rsShotResult[rsShotResult$TrainingDateTime == input$trainingselector & rsShotResult$ShotType == "free_throw" & rsShotResult$FirstName != currentUser$firstname & rsShotResult$LastName != currentUser$lastname,]$ShotAverage), digits = 0)
+      percentageDribbleTeam <- round(mean(rsShotResult[rsShotResult$TrainingDateTime == input$trainingselector & rsShotResult$ShotType == "dribble" & rsShotResult$FirstName != currentUser$firstname & rsShotResult$LastName != currentUser$lastname,]$ShotAverage), digits = 0)
+      percentageCatchShootTeam <- round(mean(rsShotResult[rsShotResult$TrainingDateTime == input$trainingselector & rsShotResult$ShotType == "catch_throw" & rsShotResult$FirstName != currentUser$firstname & rsShotResult$LastName != currentUser$lastname,]$ShotAverage), digits = 0)
       
-      dataPlayerHomeGraph <-
-        with(dataPlayerHomeGraph,
-             aggregate(
-               list(
-                 totalTaken = as.integer(value2),
-                 totalMade = as.integer(value)
-               ),
-               list(
-                 accountid = accountid,
-                 fullname = fullname,
-                 eventid = eventid,
-                 eventdate = starttime
-               ),
-               sum
-             ))
-      dataPlayerHomeGraph$percentage <- (dataPlayerHomeGraph$totalMade/dataPlayerHomeGraph$totalTaken) *100
+      playerPercentage <- c(percentageFreeThrowPlayer, percentageCatchShootPlayer, percentageDribblePlayer)
+      teamPercentage <- c(percentageFreeThrowTeam,  percentageCatchShootTeam, percentageDribbleTeam)
+      dataFramePlayer <- data.frame(teamPlayer=rep(c("Player", "Team"), each=3),
+                                           shotType=rep(c("Free throw", "Catch & Shoot", "From dribble"),2),
+                                           shotPercentage=c(playerPercentage, teamPercentage)) 
+      #order
+      dataFramePlayer$shotType<- factor(dataFramePlayer$shotType, levels=c("Free throw", "Catch & Shoot", "From dribble"))
+      #plot
+      ggplot(data=dataFramePlayer, aes(x=shotType, y=shotPercentage, fill=teamPlayer)) +
+        geom_bar(stat="identity", position=position_dodge()) + 
+        labs(fill = '', x = "Shot Type", y = "Shot Percentage")
+        
       
-      ggplot(dataPlayerHomeGraph,
-             aes(x = eventdate,
-                 y = percentage,
-                 group = fullname)) +
-        geom_line((aes(color=fullname)))+ 
-        geom_point((aes(color=fullname)), size=3)+
-        theme(axis.text.x=element_text(angle = -45, hjust = 0))+
-        scale_y_continuous(limits = c(0, 100))
     })
 
   }
@@ -1018,7 +1025,7 @@ shinyServer(function(input, output, session) {
   }
   
   renderPublicEvent <- function() {
-    print(paste("latest event: ", latestEventid))
+    
     query <- paste0(
       "exec GETLASTEVENT"
     )
@@ -1042,111 +1049,209 @@ shinyServer(function(input, output, session) {
   #RENDER THE HEATMAP PAGE
   renderHeatMap <- function() {
     output$heatmap_player <- renderUI({
-      heatmapUiLayout(eventsofPlayer)
+      allTrainingOfPlayer <- rsShotResult[rsShotResult$FirstName == currentUser$firstname & rsShotResult$LastName == currentUser$lastname, ]
+      allTrainingOfPlayerDate <- allTrainingOfPlayer %>% distinct(TrainingDateTime)
+      allTrainingOfPlayerDate <- as.vector(
+        allTrainingOfPlayerDate
+      )
+      
+      heatmapUiLayout(allTrainingOfPlayerDate)
     })
   }
   
   # coach analysis
+  # Team
+  output$shotAnalyseTeam <- renderUI({
+    rsShotResult <- rsShotResult[rsShotResult$SeasonText %in% input$shotAnalyseSeason,]
+    selectizeInput(
+      "shotAnalyseTeam",
+      "Team",
+      c(sort(unique(rsShotResult$TeamName), TRUE)),
+      multiple = TRUE
+    )
+  })
+  
+  # Players
+  output$shotAnalysePlayers <- renderUI({
+
+    rsShotResult <- rsShotResult[rsShotResult$TeamName %in% input$shotAnalyseTeam,]
+    Players <- sort(unique(rsShotResult$Fullname), FALSE)
+    # Sort players by last name
+    Players <- data.frame(Players) %>%
+      arrange(gsub(".*\\s", "", Players))
+    
+    selectizeInput(
+      "shotAnalysePlayers",
+      "Players",
+      Players,
+      multiple = TRUE
+    )
+  })
+  
   renderAnalyses <- function(){
     # make plot
     
+    teamData <- rsShotResult[rsShotResult$TrainingDate <= input$shotAnalyseDate[2]
+                             &
+                               rsShotResult$TrainingDate >= input$shotAnalyseDate[1]
+                             &
+                               rsShotResult$TeamName %in% input$shotAnalyseTeam
+                             &
+                               (rsShotResult$ShotType == input$typeselector1 | is.na(rsShotResult$ShotType))
+                             , ]
+    
+
+    resultPerPosition <- group_by(teamData, Position)
+    resultPerPosition <- summarize(resultPerPosition, meanposition = round(mean(ShotAverage)))
+    
+    
+    names(resultPerPosition)[1] <- "positions"# rename so it can be merged
+    resultPerPosition <-
+      merge(positionLocations, resultPerPosition, by = "positions") # merge with position locations
+    
+    image <- png::readPNG("www/field1.png")
+    shotpercentagePlot <- ggplot(resultPerPosition,
+                      aes(x = locationX,
+                          y = locationY,
+                          fill = meanposition)) +
+      guides(alpha = 0.4, size = FALSE) +
+      annotation_custom(rasterGrob(
+        image,
+        width = unit(1, "npc"),
+        height = unit(1, "npc")
+      ),-Inf,
+      Inf,
+      -Inf,
+      Inf) +
+      scale_fill_gradientn(
+        colors = c("steelblue", "blue", "hotpink"),
+        labels = NULL,
+        name = ""
+      ) +
+      theme(
+        aspect.ratio = 0.673,
+        axis.title.x = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank()
+      ) +
+      coord_fixed(ylim = c(0, 100), xlim = c(0, 100)) +
+      xlim(c(-10, 110)) +
+      ylim(c(-10, 110)) +
+      labs(x = "", y = "", fill = "") +
+      geom_text(label=paste0(round(resultPerPosition$meanposition, digits = 0),'%'), size=25)
+    
+    # })
+
+    ################################renderui test
+    output$shotpercentage <- renderUI({
+      img(renderImage({
+        
+        # Generate the PNG1703 x 1146
+        png("www\\shotpercentage.png", width = 1703, height = 1146)
+        plot(shotpercentagePlot)
+        dev.off()
+        
+        list(src = "www\\shotpercentage.png",
+             contentType = 'image/png',
+             width = 309,
+             height = 204)
+        
+      },deleteFile = TRUE))})
+    
       output$shotAnalyse <- renderPlot({
-      if(input$shotAnalyseShotType == "free_throw"){
+        # format historical data to fit in with new data
+        rsShotResult$Position <- gsub("positie", "", rsShotResult$Position)
+        
+        #Add "free_throw" to ShotType column for old data.
+        rsShotResult <- rsShotResult %>%
+          mutate(ShotType = if_else((rsShotResult$Position == "FT"), "free_throw", ShotType))
+        
+        #Replace "FT" with 0 in old data to indicate free throw
+        rsShotResult$Position <- gsub("FT", "0", rsShotResult$Position)
+        
+        # Position to integer
+        rsShotResult$Position <- sapply(rsShotResult$Position, as.numeric)
+        
+      if(input$typeselector1 == "free_throw"){
         position <- 0
-        updateSelectInput(session, "shotAnalysePosition", selected = 0)
       } else{
-        position <- input$shotAnalysePosition
+        position <- input$sliderPosition1
+        
       }
              if(input$staafOfLijnShotAnalyse1 == 1){
-               # The next lines are to locally save a pdf. We have not found a better way that works yet
-               pdfplot <- ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
+               # Save plot as variable to save and display
+               barplot <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers
                                    &
-                                     as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
+                                     rsShotResult$TrainingDate <= input$shotAnalyseDate[2]
                                    &
-                                     as.Date(rsShotResult$startdate) >= input$shotAnalyseDate[1]
+                                     rsShotResult$TrainingDate >= input$shotAnalyseDate[1]
                                    &
-                                     rsShotResult$value3 == position
+                                     rsShotResult$Position == position
+                                   &
+                                     rsShotResult$TeamName %in% input$shotAnalyseTeam
                                    & 
-                                     rsShotResult$value4 == input$shotAnalyseShotType
+                                    (rsShotResult$ShotType == input$typeselector1 | is.na(rsShotResult$ShotType))
                                    , ],
-                      aes(x = starttime,
-                          y = percentage,
-                          fill = fullname)) +
-                 geom_bar(stat = "identity", position = "dodge") +
-                 labs(fill = 'Names')
-               
-               locallySavePdf(pdfplot)
-               
-               # Now the actaul graph for output
-               ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
-                                   &
-                                     as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
-                                   &
-                                     as.Date(rsShotResult$startdate) >= input$shotAnalyseDate[1]
-                                   &
-                                     rsShotResult$value3 == position
-                                   & 
-                                     rsShotResult$value4 == input$shotAnalyseShotType
-                                   , ],
-             aes(x = starttime,
-                 y = percentage,
-                 fill = fullname)) +
+                      
+                      aes(x = TrainingDateTime,
+                 y = ShotAverage,
+                 fill = Fullname)) +
         geom_bar(stat = "identity", position = "dodge") +
-        labs(fill = 'Names')
+                 ylim(0, 100) +
+                 theme(axis.text.x = element_text(angle = 45, hjust = 1, size=12)) +
+                 labs(fill = 'Names', x = "Date", y = "Shot Percentage")
+               
+               locallySavePdf(barplot)
+               barplot
                
              }
    
     else {
-      rsShotResult$starttime <- as.Date(rsShotResult$starttime)
-      # The next lines are to locally save a pdf. We have not found a better way that works yet
-      pdfplot <- ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
-                          &
-                            as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
-                          &
-                            as.Date(rsShotResult$startdate) >= input$shotAnalyseDate[1]
-                          &
-                            rsShotResult$value3 == position
-                          & 
-                            rsShotResult$value4 == input$shotAnalyseShotType
-                          , ],
-            aes(starttime, percentage, col = as.factor(accountid))) +
+      rsShotResult$TrainingDate <- as.Date(rsShotResult$TrainingDate)
+     # rsShotResult$TrainingDateTime <- as.Date(rsShotResult$TrainingDateTime, format = "%Y-%m-%d %H:%M:%S")
+      # Teamdata for teamaverage line in graph
+      teamData <- rsShotResult[rsShotResult$TrainingDate <= input$shotAnalyseDate[2]
+                               &
+                                 rsShotResult$TrainingDate >= input$shotAnalyseDate[1]
+                               &
+                                 rsShotResult$Position == position
+                               &
+                                 rsShotResult$TeamName %in% input$shotAnalyseTeam
+                               &
+                                 (rsShotResult$ShotType == input$typeselector1 | is.na(rsShotResult$ShotType))
+                               , ]
+
+      # Save plot as variable to save and display
+      lineplot <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers
+                                     &
+                                       rsShotResult$TrainingDate <= input$shotAnalyseDate[2]
+                                     &
+                                       rsShotResult$TrainingDate >= input$shotAnalyseDate[1]
+                                     &
+                                       rsShotResult$Position == position
+                                     &
+                                       rsShotResult$TeamName %in% input$shotAnalyseTeam
+                                     & 
+                                       (rsShotResult$ShotType == input$typeselector1 | is.na(rsShotResult$ShotType))
+                                     , ],
+                         
+              aes(TrainingDateTime, ShotAverage, col = as.factor(Player_skey))) +
         geom_point() +
-        geom_line() +
-        scale_x_date(date_labels = "%Y-%m-%d",
-                     breaks = rsShotResult$starttime) +
-        xlab("starttime") +
+        geom_line(aes(group = Player_skey)) +
+        stat_summary(aes(group = 1), data=teamData, fun.y="mean", geom="line", size=1, color='red') +
+        xlab("TrainingDateTime") +
         scale_colour_manual(
           values = palette("default"),
           name = "Players",
-          breaks = rsShotResult$accountid,
-          labels = paste0(rsShotResult$firstname,' ', rsShotResult$lastname)
-        )  
+          breaks = rsShotResult$Player_skey,
+          labels =rsShotResult$Fullname
+        ) +
+        ylim(0, 100) +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1, size=12)) +
+        labs(x = "Date", y = "Shot Percentage")
       
-      locallySavePdf(pdfplot)
-      
-      # Now the actaul graph for output
-      ggplot(rsShotResult[rsShotResult$fullname %in% input$shotAnalysePlayers
-                          &
-                            as.Date(rsShotResult$startdate) <= input$shotAnalyseDate[2]
-                          &
-                            as.Date(rsShotResult$startdate) >= input$shotAnalyseDate[1]
-                          &
-                            rsShotResult$value3 == position
-                          & 
-                            rsShotResult$value4 == input$shotAnalyseShotType
-                          , ],
-        aes(starttime, percentage, col = as.factor(accountid))) +
-        geom_point() +
-        geom_line() +
-        scale_x_date(date_labels = "%Y-%m-%d",
-                breaks = rsShotResult$starttime) +
-        xlab("starttime") +
-        scale_colour_manual(
-          values = palette("default"),
-          name = "Players",
-          breaks = rsShotResult$accountid,
-          labels = paste0(rsShotResult$firstname,' ', rsShotResult$lastname)
-        )     
+      locallySavePdf(lineplot)
+      lineplot
     }
     })
       
@@ -1155,39 +1260,24 @@ shinyServer(function(input, output, session) {
   # render the heatmap
   renderHeatmap <- function(){
     output$heatMapPlayer <- renderPlot({
-      #make dataset
-      resultPerPosition <-
-        with(eventsOfPlayer, aggregate(
-          list(
-            totalTaken = as.integer(value2),
-            totalMade  = as.integer(value)
-          ),
-          list(
-            value3    = value3,
-            yearMonth = substr(starttime,1,7)
-          ),
-          sum
-        ))
-      print(resultPerPosition)
-      resultPerPosition$percentage <-
-        ((
-          as.integer(resultPerPosition$totalMade) / as.integer(resultPerPosition$totalTaken)
-        ) * 100) # calculate percentage
-      names(resultPerPosition)[1] <- "positions"# rename so it can be merged
-      resultPerPosition <-
-        merge(positionLocations, resultPerPosition, by = "positions") # merge with position locations
+      allTrainingOfPlayer <- rsShotResult[rsShotResult$FirstName == currentUser$firstname & rsShotResult$LastName == currentUser$lastname & rsShotResult$ShotType != "free_throw", ]
+      allTrainingOfPlayerDate <- allTrainingOfPlayer %>% distinct(TrainingDateTime)    
       
-      resultPerPosition <- resultPerPosition[resultPerPosition$yearMonth == input$heatMapSlider,]
+      #"2017-12-13 08:00:00"
+      resultPerPosition <- allTrainingOfPlayer[allTrainingOfPlayer$TrainingDateTime == "2017-12-13 08:00:00",]
       
-      resultPerPosition <-
-        resultPerPosition[rep(row.names(resultPerPosition),
-                              resultPerPosition$percentage),] # repeat amount of percentage to create heat on that point
+      
+      
+      # resultPerPosition <-
+      #   resultPerPosition[rep(row.names(resultPerPosition),
+      #                          each = 4),] # repeat amount of percentage to create heat on that point
       print(resultPerPosition)
+      
       image <- png::readPNG("www/field.png")
       ggplot(resultPerPosition,
              aes(x = locationX,
                  y = locationY,
-                 fill = percentage)) +
+                 fill = shotAverage)) +
         guides(alpha = 0.4, size = FALSE) +
         annotation_custom(rasterGrob(
           image,
@@ -1222,51 +1312,488 @@ shinyServer(function(input, output, session) {
     })
   }
   
-  # get all results
-  getShotResults <- function(x){
-    query <- paste0(
-      "exec GETSHOTRESULTS"
-    )
-    sql <- sqlInterpolate(conn, query)
-    rsShotResult <- dbGetQuery(conn, sql)
+
   
-    # transform data
-    rsShotResult$startdate <- substring(rsShotResult$starttime, 1, 11)
-    rsShotResult$fullname <-
-      paste(rsShotResult$firstname, rsShotResult$lastname, sep = " ")
-    rsShotResult$percentage <-
-      ((
-        as.integer(rsShotResult$value) / as.integer(rsShotResult$value2)
-      ) * 100)# calculate percentage
-    
-    #calculate made points
-    rsShotResult$points <-
-      ifelse(
-        rsShotResult$value3 %in% positionsInCircle,
-        (2 * as.integer(rsShotResult$value)),
-        ifelse(
-          rsShotResult$value3 %in% positionsOutCircle,
-          (3 * as.integer(rsShotResult$value)),
-          NA
-        )
-      )
-    
-    rsShotResult <<-
-      rsShotResult[rsShotResult$percentage <= 100,]#filter only viable percentage
-  }
+ 
   
-  locallySavePdf <- function(pdfSave) {
-    #print("saving pdf")
-    savedPdf <<- pdfSave
-    
-  }
+
   
-  observeEvent(input$pdfButton, {
-    print("making pdf")
-    pdf("pdfdata.pdf",width=7,height=5, title = "Mijn test graph", onefile= T)
+  
+  # Make pdf file
+  makePdf <- function(){
+    pdf("pdfdata.pdf",width=7,height=5, title = "Graph", onefile= T)
     print(savedPdf)
     dev.off()
+  }
+  
+  # Download file in browser  
+  output$pdfButton <- downloadHandler(
+    filename = "grafiek.pdf",
+    content = function(file) {
+      makePdf()
+      file.copy("pdfdata.pdf", file)
+    }
+  )
+  
+  locallySavePdf <- function(pdfSave) {
+    savedPdf <<- pdfSave
+  }
+  
+  #########################CODE andere groep
+  
+  #displays just the trainings the player attended
+  observeEvent(c(input$player, input$month), {
+    
+    
+    detailedList6 <- dplyr::filter(shots, grepl(input$player, Fullname) & grepl(input$month, Month))
+    detailedList7 <- data.frame()
+    detailedList7 <- rbind(detailedList7, detailedList6)
+    
+    
+    positionlist <- c()
+    positionlist <- detailedList7$Position
+    
+    positionlist <- sort(positionlist, decreasing = FALSE)
+    
+    
+    #selects latest available training month 
+    
+    updateSelectInput(session, "position",
+                      choices = positionlist,
+                      selected = positionlist[1])
+    
   })
+  
+  
+  observeEvent(c(input$player, input$position), {
+    
+    
+    player3 <- input$player
+    position3 <- input$position
+    detailedList4 <- dplyr::filter(shots, grepl(player3, Fullname) & grepl(position3, Position))
+    detailedList5 <- data.frame()
+    detailedList5 <- rbind(detailedList5, detailedList4)
+    
+    
+    monthlist <- detailedList5$Month
+    
+    #selects latest available training month 
+    monthlist <- sort(monthlist, decreasing = TRUE)
+
+    
+    updateSelectInput(session, "month",
+                      choices = monthlist,
+                      selected = monthlist[1])
+    
+  })
+  
+  
+  #for the graph
+  
+  observeEvent(c(input$month, input$player, input$position), {
+    
+    
+    month <- input$month
+    player <- input$player
+    position <- input$position
+    
+
+    
+
+    
+    
+    # #for the  graphhhhhhhhhh
+    detailedList <- data.frame()
+    detailedList1 <- dplyr::filter(shots, grepl(month, TrainingDateTime) & grepl(player, Fullname) & grepl(position, Position))
+    detailedList <- rbind(detailedList, detailedList1)
+    
+    output$startmsg<- renderValueBox({ valueBox( value=tags$p(paste0("Overview"), style = "font-size: 150%;"), subtitle = tags$p(paste0("Statistics ", player, detailedList$LastName, " of ", month, " at ", position),style = "font-size: 120%;"), width = 2, color="blue", icon("user", class = NULL, lib = "font-awesome"))})
+    
+    
+    #total position stats
+    
+    totalshots <- sum(detailedList$ShotsNumber)
+    shotsmade <- sum(detailedList$ShotsMade)
+    shotsmissed <- totalshots - shotsmade
+    
+    output$totalshots<- renderValueBox({ valueBox( value=totalshots, subtitle = paste0("Total number of shots taken by ",player ), width = 2, color="blue", icon("dribbble", class = NULL, lib = "font-awesome"))})
+    output$shotsmade<- renderValueBox({ valueBox( value=shotsmade, subtitle = paste0("Total number of scored shots by ",player ), width = 2, color="green", icon("dribbble", class = NULL, lib = "font-awesome"))})
+    output$shotsmissed<- renderValueBox({ valueBox( value=shotsmissed, subtitle = paste0("Total number of shots missed by ",player ), width = 2, color="red", icon("dribbble", class = NULL, lib = "font-awesome"))})
+    
+    
+    #cleaning the training date
+    detailedList$TrainingDateTime <- gsub("T", "\n", detailedList$TrainingDateTime)
+    detailedList$TrainingDateTime <- gsub("Z", "", detailedList$TrainingDateTime)
+    
+    
+    #monthly average percentage
+    monthlyavg <- sum(detailedList$ShotsMade) / sum(detailedList$ShotsNumber) * 100
+    monthlyavg <- round(monthlyavg, digits = 1)
+    
+    output$playeraverage<- renderValueBox({ valueBox( value=tags$p(paste0(monthlyavg, "%"), style = "font-size: 150%;"), subtitle = tags$p(paste0("Monthly Percentage ",player ),style = "font-size: 120%;"), width = 2, color="blue", icon("user", class = NULL, lib = "font-awesome"))})
+    
+    #monthly team average
+    groupList2 <- data.frame()
+    groupList3 <- dplyr::filter(shots, grepl(month, TrainingDateTime) & grepl(position, Position))
+    groupList2 <- rbind(groupList2, groupList3)
+    
+    #bar
+    groupbar <- aggregate(groupList2[, 17:18], list(groupList2$Fullname), sum)
+    groupbar$Percentage <- with(groupbar, groupbar$ShotsMade / groupbar$ShotsNumber * 100)
+    groupbar$Percentage <- round(groupbar$Percentage, digits = 1)
+    
+    colnames(groupbar) <- c("Name", "ShotsMade", "ShotsNumber", "Percentage")
+    
+    groupbardf <- data.frame()
+    groupbardf <- rbind(groupbardf, groupbar[,c(1,4)])
+    
+    
+    barr <- gather(groupbardf, Percentage, value, -Name)
+    barr$Legend <- with(barr, ifelse(barr$Name == player, "Player","Teamplayers"))
+    
+    
+    
+    
+    
+    #barplotttt 
+    output$bar <- renderPlot({
+      output$playervsplayers= downloadHandler(
+        filename = function() {paste0(player,"_vs_Players_", month, "_", position,".pdf")},
+        content = function(file) {
+          ggsave(file, plot=p, device = "pdf", width=14, height=8.5)
+        }
+      )
+      
+      
+      p <- ggplot(barr, aes(Name, value, fill=Legend)) +   
+        geom_bar( position = "dodge", stat = "identity") +
+        scale_fill_manual(values = c("Player" = "#F07D00", "Teamplayers" = "#00bfff")) +
+        
+        geom_text(aes(label=value, group=Name), position=position_dodge(width=0.9), vjust=-0.25) +
+        xlab("Player") +
+        ylab("Percentage") +
+        coord_cartesian(ylim = c(0, 100)) +
+        
+        
+        
+        theme(
+          panel.border = element_blank(),
+          # legend.key = element_blank(),
+          axis.ticks = element_blank(),
+          legend.position="none",
+          
+          panel.grid = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.background = element_blank(),
+          plot.background = element_rect(fill = "transparent",colour = NA))
+      
+      p
+      
+      
+      
+      
+      
+      
+    })
+    
+    
+    
+    
+    
+    
+    
+    #total information of team
+    totalshotsgroup <- sum(groupList2$ShotsNumber)
+    shotsmadegroup <- sum(groupList2$ShotsMade)
+    shotsmissedgroup <- totalshotsgroup - shotsmadegroup
+    
+    #valueboxes of the team
+    output$totalshotsgroup<- renderValueBox({ valueBox( value=totalshotsgroup, subtitle = paste0("Total number of shots taken by Team"), width = 2, color="blue", icon("users", class = NULL, lib = "font-awesome"))})
+    output$shotsmadegroup<- renderValueBox({ valueBox( value=shotsmadegroup, subtitle = paste0("Total number of scored shots by Team "), width = 2, color="green", icon("users", class = NULL, lib = "font-awesome"))})
+    output$shotsmissedgroup<- renderValueBox({ valueBox( value=shotsmissedgroup, subtitle = paste0("Total number of shots missed by Team"), width = 2, color="red", icon("users", class = NULL, lib = "font-awesome"))})
+    
+    #difference of player compared to team
+    playertakendif <- totalshots / totalshotsgroup * 100
+    playermadedif <- shotsmade / shotsmadegroup * 100
+    playermisseddif <- shotsmissed / shotsmissedgroup * 100
+    
+    #some rounding
+    playertakendif <- round(playertakendif, digits = 1)
+    playermadedif <- round(playermadedif, digits = 1)
+    playermisseddif <- round(playermisseddif, digits = 1)
+    
+    #valueboxes that display the differences
+    output$playertakendif<- renderValueBox({ valueBox( value=paste0(playertakendif, "%"), subtitle = paste0("Of the total shots are taken by ", player), width = 2, color="blue", icon("dribbble", class = NULL, lib = "font-awesome"))})
+    output$playermadedif<- renderValueBox({ valueBox( value=paste0(playermadedif, "%"), subtitle = paste0("Of the total shots are scored by ", player), width = 2, color="green", icon("dribbble", class = NULL, lib = "font-awesome"))})
+    output$playermisseddif<- renderValueBox({ valueBox( value=paste0(playermisseddif, "%"), subtitle = paste0("Of the total shots are missed by ", player), width = 2, color="red", icon("dribbble", class = NULL, lib = "font-awesome"))})
+    
+    #tean average of the month
+    monthlyteamavg <- sum(groupList2$ShotsMade) / sum(groupList2$ShotsNumber) * 100
+    monthlyteamavg <- round(monthlyteamavg, digits = 1)
+    
+    #orderign
+    order(groupbardf$Percentage)
+    order(groupbardf$Percentage, decreasing = TRUE)   
+    groupbardf <-  groupbardf[order(groupbardf$Percentage, decreasing = TRUE),]
+    groupbardf$Rank <- 1:nrow(groupbardf) 
+    
+    
+    #topplayers of the month per position
+    topplayers <- sqldf(sprintf("select * from groupbardf where Percentage >= '%s'", monthlyteamavg))
+    
+    #bottom players of the month on specific position
+    bottomplayers <- sqldf(sprintf("select * from groupbardf where Percentage < '%s'", monthlyteamavg))
+    bottomplayers <-  bottomplayers[order(bottomplayers$Rank, decreasing = TRUE),]
+    
+    #leaderboards of the month table
+    output$topplayertable<- renderTable( spacing = "m",{topplayers[,c(3,1,2)]}, width = "50%")
+    output$bottomplayertable<- renderTable( spacing = "m",{bottomplayers[,c(3,1,2)]}, width = "50%")
+    
+    
+    #csv
+    output$downloadCsv2 <- downloadHandler(
+      filename = function() {
+        paste0("Top_players_", position, "_", month,".csv")
+      },
+      content = function(file) {
+        write.csv2(topplayers[,c(1,2)], file, row.names=FALSE, sep="\t")
+      }
+    )
+    
+    
+    output$downloadCsv3 <- downloadHandler(
+      filename = function() {
+        paste0("Bottom_players_", position, "_", month,".csv")
+      },
+      content = function(file) {
+        write.csv2(bottomplayers[,c(1,2)], file, row.names=FALSE, sep="\t")
+      }
+    )
+    
+    #monthly team percentage
+    output$teamaverage<- renderValueBox({ valueBox( value=tags$p(paste0(monthlyteamavg, "%"), style = "font-size: 150%;"), subtitle = tags$p("Monthly team percentage",style = "font-size: 120%;"), width = 2, color="blue", icon("users", class = NULL, lib = "font-awesome"))})
+    
+    #difference average percentage
+    differenceavg <- monthlyavg - monthlyteamavg
+    differenceavg <- round(differenceavg, digits =1)
+    differenceavg <- paste0(differenceavg, "%")
+    
+    
+    if(differenceavg < 0) {
+      output$differenceavg<- renderValueBox({ valueBox( value=tags$p(paste0(differenceavg), style = "font-size: 150%;"), subtitle = tags$p("Difference compared to team",style = "font-size: 120%;"), width = 2, color="red",icon("arrow-down", class = NULL, lib = "font-awesome"))})
+    } else if(differenceavg == 0 | differenceavg < 0.1) {
+      
+      output$differenceavg<- renderValueBox({ valueBox( value=tags$p(paste0(differenceavg),style = "font-size: 150%;"), subtitle = tags$p("Difference compared to team",style = "font-size: 120%;"), width = 2, color="blue")})
+      
+    } else {
+      output$differenceavg<- renderValueBox({ valueBox( value=tags$p(paste0("+",differenceavg),style = "font-size: 150%;"), subtitle = tags$p("Difference compared to team",style = "font-size: 120%;"), width = 2, color="green",icon("arrow-up", class = NULL, lib = "font-awesome"))})
+      
+    }
+    
+    
+    
+    
+    #plotting the actual graph
+    output$performance <- renderPlotly({
+      
+      output$playerreport= downloadHandler(
+        filename = function() {paste0("player_report_", month, "_", position, ".pdf")},
+        content = function(file) {
+          ggsave(file, device = "pdf", width=12, height=8.5)
+        }
+      )
+      
+      withProgress(message = 'Making plot for CTO Basketball', value = 0, {
+        # Number of times we'll go through the loop
+        n <- 10
+        
+        for (i in 1:n) {
+          # Each time through the loop, add another row of data. This is
+          # a stand-in for a long-running computation.
+          
+          # Increment the progress bar, and update the detail text.
+          incProgress(1/n, detail = paste("Preparing data", i))
+          # Pause for 0.05 seconds to simulate a long computation.
+          Sys.sleep(0.05) 
+          
+        }
+        
+      })
+      
+      #color for the playeraverage in graph
+      
+      if (monthlyavg < monthlyteamavg) {
+        
+        colorplayer <- paste0("red")
+      } 
+      
+      
+      else {
+        
+        colorplayer <- paste0("#32cd32")
+      }
+      
+      
+      
+      p1 <-     ggplotly(
+        
+        
+        ggplot() +
+          xlab("Training") +
+          ylab("Percentage") +
+          geom_point(data=detailedList, aes(x=detailedList$TrainingDateTime, y=detailedList$Percentage, color="Player shot percentage"))  +
+          geom_hline(aes(yintercept = monthlyavg, color="Monthly player average"),linetype="dotted", show_guide=TRUE) +
+          geom_hline(aes(yintercept = monthlyteamavg, color="Monthly team average"), show_guide=TRUE) +
+          coord_cartesian(ylim = c(0, 100)) +
+          scale_color_manual(values = c("Player shot percentage" = "black", "Monthly player average" = paste0(colorplayer),"Monthly team average" = "blue")) +
+          
+          
+          
+          
+          theme(
+            legend.justification = c(1, 0), legend.position = c(1, 0),
+            
+            panel.border = element_blank(),
+            # legend.key = element_blank(),
+            #axis.ticks = element_blank(),
+            axis.text.x=element_text(angle=40,vjust=0.6),
+            
+            panel.grid = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank(),
+            panel.background = element_blank(),
+            plot.background = element_rect(fill = "transparent",colour = NA))
+        
+      )
+      
+      p1
+      
+      
+      
+      
+    })
+    
+    
+    
+    
+    
+    
+    #Leaderboarddddd graph
+    
+    output$leaderboard <- renderPlotly({
+      
+      
+      
+      t <- list(
+        family = "sans serif",
+        size = 10,
+        color = toRGB("grey50"))
+      
+      p3 <- plot_ly(groupbardf, x = groupbardf$Rank, y = groupbardf$Percentage, type="scatter", mode = "markers", marker=list(color=ifelse(groupbardf$Percentage<monthlyteamavg,"red","green") , opacity=0.5 , size=30) ) %>%
+        add_text(textfont = t, text=groupbardf$Name,textposition = "top") %>%
+        add_trace(x =c(min(groupbardf$Rank), max(groupbardf$Rank)), y= monthlyteamavg, mode = "lines") %>%
+        layout(showlegend=F)
+      
+      
+      
+      p3
+      
+    }
+    
+    )
+    
+    
+  }) # END observe evwnt
+  
+  
+  
+  
+  
+  
+  
+  
+  #tableeeeeee position specific
+  observeEvent(c(input$month, input$player, input$position), {
+    
+    
+    month1 <- input$month
+    player1 <- input$player
+    position1 <- input$position
+    
+    fortable1 <- sqldf(sprintf("select Position, Fullname, LastName, TrainingDateTime, ShotsMade, ShotsNumber, Percentage, Month from shots where Month is '%s'", month1, "AND Fullname is '$s'", player1))
+    
+    tableplayerdf1 <- data.frame()
+    tableplayerdf1 <- rbind(tableplayerdf1, fortable1)
+    # hi <- sqldf("SELECT * FROM lol WHERE Training = 'month'")
+    
+    
+    
+    
+    #for the individual tablw
+    detailedList2 <- data.frame()
+    detailedList3 <- filter(shots, grepl(month1, TrainingDateTime) & grepl(player1, Fullname) & grepl(position1, Position))
+    
+    
+    
+    
+    detailedList2 <- rbind(detailedList2, detailedList3)
+    
+    #colnames(detailedList2) <- c("Position", "Name", "Surname", "Test", "Training", "Shots Made", "Total Shots", "Percentage (%)", "Month")
+    
+    # detailedList2$Training <- gsub("T", " | ", detailedList2$Training)
+    # detailedList2$Training <- gsub("Z", "", detailedList2$Training)
+    
+    
+
+    
+    output$playertable <- renderTable( spacing = "m",{detailedList2[,c(2,3,11,15,17,18,19)]}, width = "100%")
+    
+    
+    output$downloadCsv <- downloadHandler(
+      filename = function() {
+        paste0(player1,"_results_", position1, "_", month1,".csv")
+      },
+      content = function(file) {
+        write.csv2(detailedList2[,c(2,3,11,15,17,18,19)], file, row.names=FALSE, sep="\t")
+      }
+    )
+    
+    
+    
+    
+    
+    
+    
+    
+    #Position information
+    
+  })
+  
+  observeEvent(input$positionInfo, {
+    showModal(modalDialog(
+      align="center",
+      title = "Field positions",
+      
+      img(
+        id = "fieldImage",
+        src = "field.png",
+        align = "center",
+        usemap = "#nameMap",
+        height = "300px",
+        width = "500px"
+        
+      ),
+      easyClose = TRUE,
+      footer = NULL
+    ))
+  })
+  
+  output$slider <- renderUI({
+    sliderInput(inputId = "B", label = "B", min = 0, max = 2*input$A, value = 5)
+  })
+  
+  
 
 })
 
