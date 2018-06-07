@@ -1095,7 +1095,16 @@ shinyServer(function(input, output, session) {
         # format historical data to fit in with new data
         rsShotResult$Position <- gsub("positie", "", rsShotResult$Position)
         # Remve FT rows for testing
-        rsShotResult <- filter(rsShotResult, Position != "FT")
+        #rsShotResult <- filter(rsShotResult, Position != "FT")
+        
+        #Add "free_throw" to ShotType column for old data.
+        rsShotResult <- rsShotResult %>%
+          mutate(ShotType = if_else((rsShotResult$Position == "FT"), "free_throw", ShotType))
+          #mutate(ShotType = if_else((rsShotResult$Position == "FT"), "free_throw"))
+        
+        #Replace "FT" with 0 in old data to indicate free throw
+        rsShotResult$Position <- gsub("FT", "0", rsShotResult$Position)
+        
         # Position to integer
         rsShotResult$Position <- sapply(rsShotResult$Position, as.numeric)
         # Test replace na
@@ -1158,8 +1167,8 @@ shinyServer(function(input, output, session) {
                                      &
                                        rsShotResult$TeamName %in% input$shotAnalyseTeam
                                      & 
-                                       #rsShotResult$ShotType == input$typeselector1 | is.na(rsShotResult$ShotType)
-                                       rsShotResult$ShotType == input$typeselector1
+                                       (rsShotResult$ShotType == input$typeselector1 | is.na(rsShotResult$ShotType))
+                                       #rsShotResult$ShotType == input$typeselector1
                                      , ],
               aes(TrainingDateTime, ShotAverage, col = as.factor(Player_skey))) +
         geom_point() +
