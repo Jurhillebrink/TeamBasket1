@@ -19,6 +19,7 @@ library(grid) # for rastergrob, to set court as background of plot
 library(mailR)
 library(plotly)
 library(tidyr)
+library(dplyr)
 
 require("DT")
 
@@ -736,12 +737,7 @@ shinyServer(function(input, output, session) {
                "IPP Dashboard",
                tabName = "performance",
                icon = icon("dribbble")
-             ),
-            menuSubItem(
-              "heatmapjur",
-              tabName = "heatmapgoer",
-              icon = icon("dribbble")
-            )
+             )
             
             
           ), 
@@ -1095,17 +1091,16 @@ shinyServer(function(input, output, session) {
   renderAnalyses <- function(){
     # make plot
     
-    teamData <- rsShotResult[as.Date(rsShotResult$TrainingDate) <= input$shotAnalyseDate[2]
+    teamData <- rsShotResult[rsShotResult$TrainingDate <= input$shotAnalyseDate[2]
                              &
-                               as.Date(rsShotResult$TrainingDate) >= input$shotAnalyseDate[1]
+                               rsShotResult$TrainingDate >= input$shotAnalyseDate[1]
                              &
-                               rsShotResult$ShotType == input$typeselector1
+                               rsShotResult$TeamName %in% input$shotAnalyseTeam
+                             &
+                               (rsShotResult$ShotType == input$typeselector1 | is.na(rsShotResult$ShotType))
                              , ]
     
-    
-    # output$heatMapJurIsLekker <- renderPlot({
-    
-    library(dplyr)
+
     resultPerPosition <- group_by(teamData, Position)
     resultPerPosition <- summarize(resultPerPosition, meanposition = round(mean(ShotAverage)))
     
@@ -1113,12 +1108,6 @@ shinyServer(function(input, output, session) {
     names(resultPerPosition)[1] <- "positions"# rename so it can be merged
     resultPerPosition <-
       merge(positionLocations, resultPerPosition, by = "positions") # merge with position locations
-    
-
-    
-    # resultPerPosition <-
-    #   resultPerPosition[rep(row.names(resultPerPosition),
-    #                         resultPerPosition$percentage),] # repeat amount of percentage to create heat on that point
     
     image <- png::readPNG("www/field1.png")
     shotpercentagePlot <- ggplot(resultPerPosition,
