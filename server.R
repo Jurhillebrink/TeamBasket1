@@ -1090,8 +1090,21 @@ shinyServer(function(input, output, session) {
   
   renderAnalyses <- function(){
     # make plot
-
+    
       output$shotAnalyse <- renderPlot({
+        # format historical data to fit in with new data
+        rsShotResult$Position <- gsub("positie", "", rsShotResult$Position)
+        
+        #Add "free_throw" to ShotType column for old data.
+        rsShotResult <- rsShotResult %>%
+          mutate(ShotType = if_else((rsShotResult$Position == "FT"), "free_throw", ShotType))
+        
+        #Replace "FT" with 0 in old data to indicate free throw
+        rsShotResult$Position <- gsub("FT", "0", rsShotResult$Position)
+        
+        # Position to integer
+        rsShotResult$Position <- sapply(rsShotResult$Position, as.numeric)
+        
       if(input$typeselector1 == "free_throw"){
         position <- 0
       } else{
@@ -1106,14 +1119,17 @@ shinyServer(function(input, output, session) {
                                      rsShotResult$TrainingDate >= input$shotAnalyseDate[1]
                                    &
                                      rsShotResult$Position == position
+                                   &
+                                     rsShotResult$TeamName %in% input$shotAnalyseTeam
                                    & 
-                                     rsShotResult$ShotType == input$typeselector1
+                                    (rsShotResult$ShotType == input$typeselector1 | is.na(rsShotResult$ShotType))
                                    , ],
                       
                       aes(x = TrainingDateTime,
                  y = ShotAverage,
                  fill = Fullname)) +
         geom_bar(stat = "identity", position = "dodge") +
+                 ylim(0, 100) +
                  theme(axis.text.x = element_text(angle = 45, hjust = 1, size=12)) +
                  labs(fill = 'Names', x = "Date", y = "Shot Percentage")
                
@@ -1131,10 +1147,12 @@ shinyServer(function(input, output, session) {
                                  rsShotResult$TrainingDate >= input$shotAnalyseDate[1]
                                &
                                  rsShotResult$Position == position
-                               & 
-                                 rsShotResult$ShotType == input$typeselector1
+                               &
+                                 rsShotResult$TeamName %in% input$shotAnalyseTeam
+                               &
+                                 (rsShotResult$ShotType == input$typeselector1 | is.na(rsShotResult$ShotType))
                                , ]
-      
+
       # Save plot as variable to save and display
       lineplot <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers
                                      &
@@ -1143,9 +1161,12 @@ shinyServer(function(input, output, session) {
                                        rsShotResult$TrainingDate >= input$shotAnalyseDate[1]
                                      &
                                        rsShotResult$Position == position
+                                     &
+                                       rsShotResult$TeamName %in% input$shotAnalyseTeam
                                      & 
-                                       rsShotResult$ShotType == input$typeselector1
+                                       (rsShotResult$ShotType == input$typeselector1 | is.na(rsShotResult$ShotType))
                                      , ],
+                         
               aes(TrainingDateTime, ShotAverage, col = as.factor(Player_skey))) +
         geom_point() +
         geom_line(aes(group = Player_skey)) +
@@ -1157,6 +1178,7 @@ shinyServer(function(input, output, session) {
           breaks = rsShotResult$Player_skey,
           labels =rsShotResult$Fullname
         ) +
+        ylim(0, 100) +
         theme(axis.text.x = element_text(angle = 45, hjust = 1, size=12)) +
         labs(x = "Date", y = "Shot Percentage")
       
