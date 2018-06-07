@@ -425,12 +425,12 @@ dashboardUI <<- fluidPage(
                   )
                   )
           
-          #, 
-          # tabItem(
-          #   tabName = "lastEventCoach",
-          #   fluidPage(
-          #     uiOutput('last_event_coach'))
-          # )
+          ,
+          tabItem(
+            tabName = "lastEventCoach",
+            fluidPage(
+              uiOutput('last_event_coach'))
+          )
         )
       )
   )
@@ -575,46 +575,48 @@ adminUiLayout <<- function(x){
 # the page of the data of the latest event
 lastEventLayout <<- function(eventData, user){
   # convert data to numerics to calculate
-  eventData$value  <- as.numeric(eventData$value)
-  eventData$value2 <- as.numeric(eventData$value2)
+  # eventData$value  <- as.numeric(eventData$value)
+  # eventData$value2 <- as.numeric(eventData$value2)
   
   return(
     fluidPage(
       fluidRow(
         #list used positions
         box(
-          title = paste("Training",eventData[1,'startdate']),width = 3, background = "orange",
+          title = paste("Training",eventData[1,'TrainingDateTime']),width = 3, background = "orange",
           "Positions: ", 
-          paste(sort(unique(as.numeric(eventData$value3)), decreasing=FALSE), collapse=" ")
+          paste(sort(unique(as.numeric(eventData$Position)), decreasing=FALSE), collapse=" ")
         ),
         #total amount of shots
         box(
           title = "Total made",width = 3, background = "orange",
-          h2(sum(as.numeric(eventData$value)))
+          h2(sum(as.numeric(eventData$ShotsMade)))
         ), 
         #total amount scored
         box(
           title = "Total Taken",width = 3, background = "orange",
-          h2(sum(as.numeric(eventData$value2)))
+          h2(sum(as.numeric(eventData$ShotsNumber)))
         ), 
         #total percentage of the whole team
         box(
           title = "Percentage",width = 3, background = "orange",
           h2(
             paste(
-              round((sum(as.numeric(eventData$value)) /sum(as.numeric(eventData$value2))*100),1)),"%") 
+              round((sum(as.numeric(eventData$ShotsMade)) /sum(as.numeric(eventData$ShotsNumber))*100),1)),"%") 
         )
       ),
       # player specific data
       fluidRow(
+        #print("eventData is lekker:"),
+        #print(head(eventData)),
         # choose a player
         box(
           title = "Select player",width = 3, background = "orange",
           radioButtons("select_player_last_event", "",
                        choices=
                            unique(
-                             eventData$fullname),
-                       selected = eventData[1,]$fullname)
+                             eventData$Fullname),
+                       selected = eventData[1,]$Fullname)
         ), 
         # plot the data of that player on all positions and shhot types
         box(
@@ -627,17 +629,17 @@ lastEventLayout <<- function(eventData, user){
         # choose a position
         box(
           title = "Pick position",width = 3, background = "orange",
-          radioButtons("select_position_last_event", "", 
+          radioButtons("select_position_last_event", "",
                        choices=sort(
                          as.numeric(
                            unique(
-                             eventData$value3)), 
+                             eventData$Position)),
                          decreasing = FALSE),
                        selected = min(
                          as.numeric(
                            unique(
-                             eventData$value3))))
-        ), 
+                             eventData$Position))))
+        ),
         # plot graph with all results of that position
         box(
           width = 9,
