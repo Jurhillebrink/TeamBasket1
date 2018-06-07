@@ -255,9 +255,6 @@ dashboardUI <<- fluidPage(
             fluidPage(
               uiOutput('player_home'))
           ),
-          #monthly heatmap player page
-          tabItem(tabName = "heatMapPlayer",
-                  uiOutput('heatmap_player')),
           #teammates contact list is still in development
           tabItem(
             tabName = "teammates",

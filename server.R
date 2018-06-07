@@ -785,14 +785,6 @@ shinyServer(function(input, output, session) {
             tabName = "homePlayer",
             icon = icon("home"),
             selected = TRUE
-          ),
-          menuItem("Analysis",
-                   icon = icon("bar-chart"),
-                   menuSubItem(
-                     "Heatmap",
-                     tabName = "heatMapPlayer",
-                     icon = icon("thermometer-3")
-                   )      
           )#,
           #menuItem(
           #  "Events",
