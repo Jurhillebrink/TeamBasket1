@@ -1322,6 +1322,7 @@ shinyServer(function(input, output, session) {
   # Make pdf file
   makePdf <- function(){
     pdf("pdfdata.pdf",width=7,height=5, title = "Graph", onefile= T)
+    print(savedPdf)
     dev.off()
   }
   
