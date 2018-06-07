@@ -85,6 +85,8 @@ shots$Month <- substr(shots$TrainingDateTime, 0, 7)
 playerlist <- data.frame(shots$FirstName, shots$LastName)
 shots$Fullname <- as.character(interaction(playerlist,sep=" "))
 
+currentUser <- NULL
+
 
 getAllPlayers()
 getAllTeams()
