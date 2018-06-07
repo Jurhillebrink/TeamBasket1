@@ -560,12 +560,12 @@ shinyServer(function(input, output, session) {
         menuItem(
           "Analyse players",
           icon = icon("bar-chart"),
-          # menuSubItem(
-          #   "Last event",
-          #   tabName = "lastEventCoach",
-          #   icon = icon("dribbble"),
-          #   selected = TRUE # direct to last event page
-          # ),
+          menuSubItem(
+            "Last event",
+            tabName = "lastEventCoach",
+            icon = icon("dribbble"),
+            selected = TRUE # direct to last event page
+          ),
           menuSubItem(
             "Shot results",
             tabName = "shotAnalyse",
@@ -737,7 +737,12 @@ shinyServer(function(input, output, session) {
                "IPP Dashboard",
                tabName = "performance",
                icon = icon("dribbble")
-             )
+             ),
+            menuSubItem(
+              "Last event",
+              tabName = "lastEventCoach",
+              icon = icon("dribbble")
+            )
             
             
           ), 
@@ -805,15 +810,10 @@ shinyServer(function(input, output, session) {
   
   #Render the player info
   renderLastEvent <- function(){
-    # get the id of the last event
-    query <- paste0(
-      "exec GETLASTDATE"
-    )
-    sql <- sqlInterpolate(conn, query)
-    latestDate <- dbGetQuery(conn, sql)$starttime
-    
-    eventData <- rsShotResult[rsShotResult$starttime == latestDate,] # select dtata of last date
-    
+    lastDateTime <- head(rsShotResult[order(rsShotResult$TrainingDateTime , decreasing = TRUE ),],1)
+    lastDateTime <- lastDateTime$TrainingDateTime
+    eventData <- rsShotResult[rsShotResult$TrainingDateTime == lastDateTime,] # select dtata of last date
+
     # render the page
     output$last_event_coach <- renderUI({
       lastEventLayout(eventData, currentUser)
@@ -821,19 +821,19 @@ shinyServer(function(input, output, session) {
     
     # render the player specific plot
     output$last_event_per_player <- renderPlot({
-      eventDataSelectedPlayer <- eventData[eventData$fullname == input$select_player_last_event, ] # filter by player
+      eventDataSelectedPlayer <- eventData[eventData$Fullname == input$select_player_last_event, ] # filter by player
       # combine on position and type
       eventDataSelectedPlayer <- with(eventDataSelectedPlayer,
                                      aggregate(
                                        list(
-                                         totalTaken = as.integer(value2),
-                                         totalMade = as.integer(value)
+                                         totalTaken = as.integer(ShotsNumber),
+                                         totalMade = as.integer(ShotsMade)
                                        ),
                                        list(
-                                         accountid = accountid,
-                                         fullname = fullname,
-                                         position = value3,
-                                         type = value4
+                                         accountid = Player_skey,
+                                         fullname = Fullname,
+                                         position = Position,
+                                         type = ShotType
                                        ),
                                        sum
                                      ))
@@ -857,20 +857,20 @@ shinyServer(function(input, output, session) {
       if(is.null(selectedPosition)){selectedPosition = 1}
 
       
-      eventDataOfPosition <- eventData[eventData$value3 == selectedPosition,] # filter by selected position
+      eventDataOfPosition <- eventData[eventData$Position == selectedPosition,] # filter by selected position
       
       # combine on player and type
       eventDataOfPosition <-with(eventDataOfPosition,
                                  aggregate(
                                    list(
-                                     totalTaken = as.integer(value2),
-                                     totalMade = as.integer(value)
+                                     totalTaken = as.integer(ShotsNumber),
+                                     totalMade = as.integer(ShotsMade)
                                    ),
                                    list(
-                                     accountid = accountid,
-                                     firstname = firstname,
-                                     fullname = fullname,
-                                     type = value4
+                                     accountid = Player_skey,
+                                     fullname = Fullname,
+                                     position = Position,
+                                     type = ShotType
                                    ),
                                    sum
                                  ))
