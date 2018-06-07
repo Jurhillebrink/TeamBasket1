@@ -1090,8 +1090,18 @@ shinyServer(function(input, output, session) {
   
   renderAnalyses <- function(){
     # make plot
-
+    
       output$shotAnalyse <- renderPlot({
+        # format historical data to fit in with new data
+        rsShotResult$Position <- gsub("positie", "", rsShotResult$Position)
+        # Remve FT rows for testing
+        rsShotResult <- filter(rsShotResult, Position != "FT")
+        # Position to integer
+        rsShotResult$Position <- sapply(rsShotResult$Position, as.numeric)
+        # Test replace na
+        # rsShotResult <- rsShotResult %>%
+        #   mutate(ShotType = if_else(is.na(ShotType), "-1", ShotType))
+        
       if(input$typeselector1 == "free_throw"){
         position <- 0
       } else{
@@ -1106,8 +1116,10 @@ shinyServer(function(input, output, session) {
                                      rsShotResult$TrainingDate >= input$shotAnalyseDate[1]
                                    &
                                      rsShotResult$Position == position
+                                   &
+                                     rsShotResult$TeamName %in% input$shotAnalyseTeam
                                    & 
-                                     rsShotResult$ShotType == input$typeselector1
+                                    (rsShotResult$ShotType == input$typeselector1 | is.na(rsShotResult$ShotType))
                                    , ],
                       
                       aes(x = TrainingDateTime,
@@ -1131,10 +1143,10 @@ shinyServer(function(input, output, session) {
                                  rsShotResult$TrainingDate >= input$shotAnalyseDate[1]
                                &
                                  rsShotResult$Position == position
-                               & 
-                                 rsShotResult$ShotType == input$typeselector1
+                               &
+                                 rsShotResult$ShotType == input$typeselector1 | is.null(rsShotResult$ShotType)
                                , ]
-      
+
       # Save plot as variable to save and display
       lineplot <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers
                                      &
@@ -1143,7 +1155,10 @@ shinyServer(function(input, output, session) {
                                        rsShotResult$TrainingDate >= input$shotAnalyseDate[1]
                                      &
                                        rsShotResult$Position == position
+                                     &
+                                       rsShotResult$TeamName %in% input$shotAnalyseTeam
                                      & 
+                                       #rsShotResult$ShotType == input$typeselector1 | is.na(rsShotResult$ShotType)
                                        rsShotResult$ShotType == input$typeselector1
                                      , ],
               aes(TrainingDateTime, ShotAverage, col = as.factor(Player_skey))) +
