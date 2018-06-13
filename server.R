@@ -47,10 +47,6 @@ shinyServer(function(input, output, session) {
     renderPlayerInfo()
     renderLastEvent()
     renderHeatmap()
-    renderAnalyses1()
-    renderAnalyses()
-    
-   
   }
   
   savedPdf <<- NULL
