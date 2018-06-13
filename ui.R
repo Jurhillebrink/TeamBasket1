@@ -88,7 +88,7 @@ dashboardUI <<- fluidPage(
                       radioGroupButtons(inputId = "typeselector", 
                                         label = "Type", 
                                         status = "danger",
-                                        choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
+                                        choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & shoot", "From dribble")),
                                         selected = "catch_throw"),
                       #map selector
                       img(
@@ -212,7 +212,7 @@ dashboardUI <<- fluidPage(
                       radioGroupButtons(inputId = "typeselector1", 
                                         label = "Type", 
                                         status = "danger",
-                                        choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
+                                        choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & shoot", "From dribble")),
                                         selected = "catch_throw"),
                       
                       #Render shotpercentage
@@ -673,15 +673,15 @@ playerHomeLayout <<- function(user){
       fluidRow(
         # output the quick data(percentages)
         box(width = 4,
-            title = "Free Throw",
+            title = "Free throw",
             h1(textOutput("freeThrowPercentage")),
             h3(textOutput("freeThrowCount"))),
         box(width = 4,
-            title = "Catch & Shoot",
+            title = "Catch & shoot",
             h1(textOutput("catchShootPercentage")),
             h3(textOutput("catchShootCount"))),
         box(width = 4,
-            title = "Dribble",
+            title = "From dribble",
             h1(textOutput("dribblePercentage")),
             h3(textOutput("dribbleCount")))
       ),
