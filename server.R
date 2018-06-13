@@ -263,7 +263,7 @@ shinyServer(function(input, output, session) {
   
   #Add the values to the modal dialog
   confirminputrender <- function(){
-    titles <- c("Free throw","Catch & Shoot", "From dribble", "extra_knop1")
+    titles <- c("Free throw","Catch & shoot", "From dribble", "extra_knop1")
     values <- c("free_throw","catch_shoot","dribble", "extra_knop1")
     df <- data.frame(x = values,
     y = titles)
@@ -279,11 +279,19 @@ shinyServer(function(input, output, session) {
     }
     
     output$confirmName <- renderText({ paste(allPlayers[allPlayers$accountid == input$radio,]$firstname,allPlayers[allPlayers$accountid == input$radio,]$lastname, sep=" " ) })
-    output$confirmType <- renderText({ paste(titleName) })
+    output$confirmType <- renderText({   if (input$typeselector == "catch_throw"){
+      paste("Catch & shoot")
+    } else if (input$typeselector == "free_throw"){
+      paste("Free throw")
+    } else {
+      paste("From dribble")
+    }  })
     output$confirmScore <- renderText({ paste(input$succeed, input$total, sep="/") })
     output$confirmPosition <- renderText({ paste(inputpositiondialog) })
+    print("titlename")
+    print(input)
   }
-  
+
   #On confirm shot input.
   observeEvent(input$insertShotbtn, {
     if(input$succeed <= input$total){
@@ -1031,10 +1039,10 @@ shinyServer(function(input, output, session) {
       playerPercentage <- c(percentageFreeThrowPlayer, percentageCatchShootPlayer, percentageDribblePlayer)
       teamPercentage <- c(percentageFreeThrowTeam,  percentageCatchShootTeam, percentageDribbleTeam)
       dataFramePlayer <- data.frame(teamPlayer=rep(c("Player", "Team"), each=3),
-                                           shotType=rep(c("Free throw", "Catch & Shoot", "From dribble"),2),
+                                           shotType=rep(c("Free throw", "Catch & shoot", "From dribble"),2),
                                            shotPercentage=c(playerPercentage, teamPercentage)) 
       #order
-      dataFramePlayer$shotType<- factor(dataFramePlayer$shotType, levels=c("Free throw", "Catch & Shoot", "From dribble"))
+      dataFramePlayer$shotType<- factor(dataFramePlayer$shotType, levels=c("Free throw", "Catch & shoot", "From dribble"))
       #plot
       ggplot(data=dataFramePlayer, aes(x=shotType, y=shotPercentage, fill=teamPlayer)) +
         geom_bar(stat="identity", position=position_dodge()) + 
@@ -1139,10 +1147,9 @@ shinyServer(function(input, output, session) {
                              &
                                rsShotResult$TeamName %in% input$shotAnalyseTeam
                              &
-                               (rsShotResult$ShotType == input$typeselector1 | is.na(rsShotResult$ShotType))
+                               (rsShotResult$ShotType == input$typeselector1 | rsShotResult$ShotType == "unknown" | is.na(rsShotResult$ShotType))
                              , ]
     
-
     resultPerPosition <- group_by(teamData, Position)
     resultPerPosition <- summarize(resultPerPosition, meanposition = round(mean(ShotAverage)))
     
@@ -1232,7 +1239,7 @@ shinyServer(function(input, output, session) {
                                    &
                                      rsShotResult$TeamName %in% input$shotAnalyseTeam
                                    & 
-                                    (rsShotResult$ShotType == input$typeselector1 | is.na(rsShotResult$ShotType))
+                                    (rsShotResult$ShotType == input$typeselector1 | rsShotResult$ShotType == "unknown" | is.na(rsShotResult$ShotType))
                                    , ],
                       
                       aes(x = TrainingDateTime,
@@ -1260,7 +1267,7 @@ shinyServer(function(input, output, session) {
                                &
                                  rsShotResult$TeamName %in% input$shotAnalyseTeam
                                &
-                                 (rsShotResult$ShotType == input$typeselector1 | is.na(rsShotResult$ShotType))
+                                 (rsShotResult$ShotType == input$typeselector1 | rsShotResult$ShotType == "unknown" | is.na(rsShotResult$ShotType))
                                , ]
 
       # Save plot as variable to save and display
@@ -1274,7 +1281,7 @@ shinyServer(function(input, output, session) {
                                      &
                                        rsShotResult$TeamName %in% input$shotAnalyseTeam
                                      & 
-                                       (rsShotResult$ShotType == input$typeselector1 | is.na(rsShotResult$ShotType))
+                                       (rsShotResult$ShotType == input$typeselector1 | rsShotResult$ShotType == "unknown" | is.na(rsShotResult$ShotType))
                                      , ],
                          
               aes(TrainingDateTime, ShotAverage, col = as.factor(Player_skey))) +
