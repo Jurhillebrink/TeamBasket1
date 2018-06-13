@@ -192,15 +192,6 @@ dashboardUI <<- fluidPage(
                       uiOutput("shotAnalyseTeam"),
                       # Input for selecting players
                       uiOutput("shotAnalysePlayers"),
-                      # selectizeInput( 
-                      #   "shotAnalysePlayers", 
-                      #   +
-                      #     "Players", 
-                      #   c(allPlayers$full), 
-                      #   selected = allPlayers[1, "Playername"], 
-                      #   multiple = TRUE 
-                      # ),
-                      
                       dateRangeInput(
                         'shotAnalyseDate',
                         label = 'Date range input: yyyy-mm-dd',
@@ -423,6 +414,319 @@ dashboardUI <<- fluidPage(
                   )
           
           ,
+          #### code team 2 team gemiddelde
+          tabItem(
+            
+            tabName = "Teamperformance",
+            fluidRow(
+              column ( width = 3,
+                       h4(span(tagList(icon("filter")), "Select Team")),
+                       selectizeInput('team', "", choices = shots$TeamName %>% unique(), selected = TRUE, multiple = FALSE),
+                       br()
+                       ,
+                       
+                       h4(span(tagList(icon("filter")), "Select season")),
+                       selectizeInput('season', "", choices =  shots$SeasonNr %>% unique(),selected = TRUE,  multiple = FALSE),
+                       br()
+              )),
+            
+            
+            plotlyOutput("pos1")
+          ),
+          ###einde code team 2
+          ########################################################################
+          #merge teamdashboard
+          tabItem(
+            tabName = "teamDashboard",
+            fluidPage(
+              fluidRow(
+                column(width = 12,
+                       align="center",
+                       box(width = NULL,
+                           titlePanel("Team Performance Dashboard"),
+                           h5("Dashboard Developer: Basketball Team 2"),
+                           br(),
+                           br()
+                       ))
+                
+              ),
+              
+              fluidRow(
+                column ( width = 3,
+                         box(width = NULL, status="primary", solidHeader = TRUE,
+                             title = (span(tagList(icon("filter")), "Selection")),
+                             
+                             h4(span(tagList(icon("filter")), "Select team")),
+                             selectInput('team10', "", choices = shots$TeamName, selected = FALSE),
+                             br(),
+                             
+                             h4(span(tagList(icon("filter")), "Select season")),
+                             selectInput("season10","", choices = c(NULL,shots$SeasonNr), selected = NULL),
+                             br(),
+                             
+                             h4(span(tagList(icon("filter")), "Select Position")),
+                             selectInput('position10', "", choices = shots$Position, selected = FALSE),
+                             #map selector
+                             img(
+                               id = "fieldImage1",
+                               src = "field.png",
+                               align = "center",
+                               usemap = "#nameMap1",
+                               height = "200px",
+                               width = "300px"
+                               
+                             )
+                             
+                             
+                         )
+                ),
+                column ( width = 9,
+                         
+                         box(width = NULL, status="primary", solidHeader = TRUE,
+                             title = (span(tagList(icon("crosshairs")), "Overview")),
+                             br(),
+                             align = "left",
+                             valueBoxOutput("teamtotalshots"),
+                             valueBoxOutput("teamshotsmade"),
+                             valueBoxOutput("teamshotsmissed")
+                             
+                             
+                             
+                             
+                         ))
+              ),
+              
+              
+              plotlyOutput("barblabla"),
+              
+              fluidRow(
+                column(width = 4,
+                       align = "center",
+                       titlePanel(span(tagList(icon("table")), "Dribble")),
+                       br(),
+                       tableOutput('dribbeltable')
+                ),
+                column(width = 4,
+                       align = "center",
+                       titlePanel(span(tagList(icon("table")), "Catch & Shoot")),
+                       br(),
+                       tableOutput('catchtable')
+                ),
+                column(width = 4,
+                       align = "center",
+                       titlePanel(span(tagList(icon("table")), "Free Throw")),
+                       br(),
+                       tableOutput('freetable')
+                )
+                
+              ),
+              
+              fluidRow(
+                
+                column(width = 6,
+                       align = "center",
+                       box(width = NULL, status = "primary", solidHeader = TRUE, collapsible = TRUE,
+                           titlePanel(span(tagList(icon("thumbs-up")), "Top ranked players")),
+                           h5("Players above season average"),
+                           br(),
+                           tableOutput('topseason'),
+                           downloadLink("downloadCsv12", "Export to CSV")
+                       )
+                ),
+                column(width = 6,
+                       align = "center",
+                       box(width = NULL, status = "primary", solidHeader = TRUE, collapsible = TRUE,
+                           titlePanel(span(tagList(icon("thumbs-down")), "Bottom ranked players")),
+                           h5("Players below season average"),
+                           br(),
+                           tableOutput('bottomseason'),
+                           downloadLink("downloadCsv13", "Export to CSV")
+                       )
+                )
+                
+                
+                
+                
+              )
+            )
+          ),
+          ########################################################################
+          #einde merge teamdashboard
+          ########################################################################
+          #begin code team 3
+          
+          tabItem(tabName = "shotAnalyse1",
+                  fluidRow(
+                    #input and filter options for the graph
+                    box(width = 12, status="primary", solidHeader = TRUE, collapsible = TRUE, collapsed = FALSE,
+                        title = (span(tagList(icon("filter")), "Player, Date & Position selection")),
+                        
+                        selectizeInput(width = 600,
+                                       "shotAnalysePlayers1",
+                                       "Players",
+                                       c(allPlayers$full),
+                                       selected = allPlayers[1, "Playername"],
+                                       multiple = TRUE
+                        ),
+                        ##### kolom 1
+                        column(6,
+                               dateRangeInput(width = 300,
+                                              'shotAnalyseDate1',
+                                              label = 'Date range input 1: yyyy-mm-dd',
+                                              start = "2017-03-12",
+                                              end = format(Sys.Date(), format = "%Y-%m-%d")
+                               ),
+                               
+                               #type of shot
+                               radioGroupButtons(inputId = "typeselector31", 
+                                                 label = "Type", 
+                                                 status = "danger",
+                                                 choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
+                                                 selected = "catch_throw"),
+                               
+                               #map selector Datum range 1
+                               img(
+                                 id = "fieldImage31",
+                                 src = "field.png",
+                                 align = "center",
+                                 usemap = "#nameMap31",
+                                 height = "200px",
+                                 width = "300px"
+                                 
+                               ),
+                               tags$map( id = "imageMaps31", name= "nameMap31",
+                                         tags$area( name="location1", shape="rect", coords="7,6,255,593", href="http://www.image-maps.com/1"),
+                                         tags$area( name="location6", shape="rect", coords="1448,7,1696,594", href="http://www.image-maps.com/6"),
+                                         tags$area( name="location2", shape="rect", coords="258,6,577,353", href="http://www.image-maps.com/2"),
+                                         tags$area( name="location5", shape="rect", coords="1126,6,1445,353", href="http://www.image-maps.com/5"),
+                                         tags$area( name="location3", shape="rect", coords="579,7,849,354", href="http://www.image-maps.com/3"),
+                                         tags$area( name="location4", shape="rect", coords="854,6,1124,353", href="http://www.image-maps.com/4"),
+                                         tags$area( name="location8", shape="rect", coords="579,354,849,701", href="http://www.image-maps.com/8"),
+                                         tags$area( name="location9", shape="rect", coords="853,353,1123,700", href="http://www.image-maps.com/9"),
+                                         tags$area( name="location7", shape="poly", coords="259,357,259,596,288,652,323,703,361,752,388,778,426,815,478,852,532,886,576,905,576,356,577,355,261,355", href="http://www.image-maps.com/7"),
+                                         tags$area( name="location10", shape="poly", coords="1126,352,1447,353,1446,593,1423,638,1397,682,1376,708,1349,742,1308,784,1267,820,1212,858,1163,887,1127,904", href="http://www.image-maps.com/10"),
+                                         tags$area( name="location11", shape="poly", coords="578,701,579,907,628,927,687,944,744,955,808,961,856,964,924,957,990,948,1064,929,1110,913,1125,908,1124,699", href="http://www.image-maps.com/11"),
+                                         tags$area( name="location12", shape="poly", coords="6,597,256,597,286,652,312,692,331,719,363,756,393,786,428,819,469,849,510,873,554,897,578,908,578,1142,4,1140", href="http://www.image-maps.com/12"),
+                                         tags$area( name="location13", shape="poly", coords="579,909,577,1141,1124,1141,1122,907,1083,923,1041,937,994,948,951,956,912,961,867,962,818,963,765,957,712,948,655,935,610,923", href="http://www.image-maps.com/13"),
+                                         tags$area( name="location14", shape="poly", coords="1124,906,1124,1140,1696,1140,1697,596,1446,595,1432,621,1411,660,1383,700,1350,740,1318,775,1280,811,1238,844,1183,879", href="http://www.image-maps.com/14")
+                               ),
+                               hidden(
+                                 textInput("sliderPosition31", '', value= 1, width = NULL, placeholder = NULL)
+                               ),
+                               tags$style(
+                                 HTML(
+                                   ".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar {background: #485563}"
+                                 )
+                               )
+                               
+                        ), #### einde kolom 1
+                        
+                        column(6,
+                               dateRangeInput(width = 300,
+                                              'shotAnalyseDate2',
+                                              label = 'Date range input 2: yyyy-mm-dd',
+                                              start = "2017-03-12",
+                                              end = format(Sys.Date(), format = "%Y-%m-%d")
+                               ),
+                               
+                               #type of shot
+                               radioGroupButtons(inputId = "typeselector32", 
+                                                 label = "Type", 
+                                                 status = "danger",
+                                                 choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
+                                                 selected = "catch_throw"),
+                               #map selector
+                               img(
+                                 id = "fieldImage32",
+                                 src = "field.png",
+                                 align = "center",
+                                 usemap = "#nameMap32",
+                                 height = "200px",
+                                 width = "300px"
+                                 
+                               ),
+                               tags$map( id = "imageMaps32", name= "nameMap32",
+                                         tags$area( name="location1", shape="rect", coords="7,6,255,593", href="http://www.image-maps.com/1"),
+                                         tags$area( name="location6", shape="rect", coords="1448,7,1696,594", href="http://www.image-maps.com/6"),
+                                         tags$area( name="location2", shape="rect", coords="258,6,577,353", href="http://www.image-maps.com/2"),
+                                         tags$area( name="location5", shape="rect", coords="1126,6,1445,353", href="http://www.image-maps.com/5"),
+                                         tags$area( name="location3", shape="rect", coords="579,7,849,354", href="http://www.image-maps.com/3"),
+                                         tags$area( name="location4", shape="rect", coords="854,6,1124,353", href="http://www.image-maps.com/4"),
+                                         tags$area( name="location8", shape="rect", coords="579,354,849,701", href="http://www.image-maps.com/8"),
+                                         tags$area( name="location9", shape="rect", coords="853,353,1123,700", href="http://www.image-maps.com/9"),
+                                         tags$area( name="location7", shape="poly", coords="259,357,259,596,288,652,323,703,361,752,388,778,426,815,478,852,532,886,576,905,576,356,577,355,261,355", href="http://www.image-maps.com/7"),
+                                         tags$area( name="location10", shape="poly", coords="1126,352,1447,353,1446,593,1423,638,1397,682,1376,708,1349,742,1308,784,1267,820,1212,858,1163,887,1127,904", href="http://www.image-maps.com/10"),
+                                         tags$area( name="location11", shape="poly", coords="578,701,579,907,628,927,687,944,744,955,808,961,856,964,924,957,990,948,1064,929,1110,913,1125,908,1124,699", href="http://www.image-maps.com/11"),
+                                         tags$area( name="location12", shape="poly", coords="6,597,256,597,286,652,312,692,331,719,363,756,393,786,428,819,469,849,510,873,554,897,578,908,578,1142,4,1140", href="http://www.image-maps.com/12"),
+                                         tags$area( name="location13", shape="poly", coords="579,909,577,1141,1124,1141,1122,907,1083,923,1041,937,994,948,951,956,912,961,867,962,818,963,765,957,712,948,655,935,610,923", href="http://www.image-maps.com/13"),
+                                         tags$area( name="location14", shape="poly", coords="1124,906,1124,1140,1696,1140,1697,596,1446,595,1432,621,1411,660,1383,700,1350,740,1318,775,1280,811,1238,844,1183,879", href="http://www.image-maps.com/14")
+                               ),
+                               
+                               
+                               #################################
+                               hidden(
+                                 textInput("sliderPosition32", '', value= 1, width = NULL, placeholder = NULL)
+                               ),
+                               tags$style(
+                                 HTML(
+                                   ".js-irs-0 .irs-single, .js-irs-0 .irs-bar-edge, .js-irs-0 .irs-bar {background: #485563}"
+                                 )
+                               )
+                               
+                        )), #end of box
+                    
+                    #the bar chart Plot 1
+                    box(width = 12, status="primary", solidHeader = TRUE, collapsible = TRUE, collapsed = FALSE, #collapsed = TRUE gives empty plot when opening collapsed element ???
+                        title = (span(tagList(icon("bar-chart"), icon("line-chart")), "Training results Team")),
+                        box(width = 12, height = 500,
+                            plotOutput("shotAnalyse1")
+                        ),
+                        box(width = 2, radioButtons("staafOfLijnShotAnalyse31", label = NULL,choices = list("Bar" = 1, "Line" = 2
+                        ),selected = 1, inline = TRUE), style = "float:left"),
+                        downloadButton("pdfButton31", "Export to PDF 1", style = "float:right"),
+                        
+                        #the bar chart Plot 2
+                        box(width = 12, height = 500,
+                            plotOutput("shotAnalyse2")
+                        ),
+                        box(width = 2, radioButtons("staafOfLijnShotAnalyse32", label = NULL,choices = list("Bar" = 1, "Line" = 2
+                        ),selected = 1, inline = TRUE), style = "float:left"),
+                        downloadButton("pdfButton32", "Export to PDF 2", style = "float:right")
+                    ),
+                    
+                    
+                    # Plots van vergelijking voor 1 speelster
+                    #the bar chart Plot 1
+                    box(width = 12, status="primary", solidHeader = TRUE, collapsible = TRUE, collapsed = FALSE,
+                        title = (span(tagList(icon("bar-chart"), icon("line-chart")), "Training results Individual Player")),
+                        box(width = 12, height = 500, 
+                            
+                            column(width = 6, height = 600,
+                                   plotOutput("shotAnalyse3")
+                            ),
+                            
+                            column(width = 6, height = 600,
+                                   plotOutput("shotAnalyse4")
+                            )
+                        ),
+                        column(width = 6, box(width = 4, radioButtons("staafOfLijnShotAnalyse33", label = NULL,choices = list("Bar" = 1, "Line" = 2
+                        ),selected = 1, inline = TRUE), style = "float:left"),
+                        downloadButton("pdfButton33", "Export to PDF 3", style = "float:right")),
+                        
+                        column(width = 6, box(width = 4, radioButtons("staafOfLijnShotAnalyse34", label = NULL,choices = list("Bar" = 1, "Line" = 2
+                        ),selected = 1, inline = TRUE), style = "float:left"),
+                        downloadButton("pdfButton34", "Export to PDF 4", style = "float:right"))
+                        
+                    )
+                    
+                    
+                    
+                  )),
+          
+          ########################################################################
+          #einde code team 3
+          
+          
           tabItem(
             tabName = "lastEventCoach",
             fluidPage(

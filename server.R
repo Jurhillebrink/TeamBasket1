@@ -36,7 +36,9 @@ shinyServer(function(input, output, session) {
     renderLastEvent()
     renderPlayerInfo()
     renderHeatmap()
+    renderAnalyses1()
     renderAnalyses()
+
     
   })
   
@@ -45,7 +47,9 @@ shinyServer(function(input, output, session) {
     renderPlayerInfo()
     renderLastEvent()
     renderHeatmap()
-    renderAnalyses
+    renderAnalyses1()
+    renderAnalyses()
+    
    
   }
   
@@ -553,24 +557,48 @@ shinyServer(function(input, output, session) {
     output$menu <- renderMenu({
       sidebarMenu(
         menuItem(
-          "InvoerSchoten",
+          "Start Training",
           tabName = "InvoerSchoten1",
-          icon = icon("plus-circle")
+          icon = icon("plus-circle"),
+          selected = TRUE
         ),
         menuItem(
-          "Analyse players",
+          "Analyse",
           icon = icon("bar-chart"),
           menuSubItem(
-            "Last event",
-            tabName = "lastEventCoach",
-            icon = icon("dribbble"),
-            selected = TRUE # direct to last event page
+            "Individual Shot Results",
+            tabName = "shotAnalyse"
+            ,icon = icon("")
+          ), 
+          menuSubItem(
+            "Monthly Individual Shot Results",
+            tabName = "performance"
+            ,icon = icon("")
           ),
           menuSubItem(
-            "Shot results",
-            tabName = "shotAnalyse",
-            icon = icon("bar-chart")
+            "Individual Results Comparison",
+            tabName = "shotAnalyse1"
+            ,icon = icon("")
+          ),
+          menuSubItem(
+            "Seasonal Team Results",
+            tabName = "Teamperformance"
+            ,icon = icon("")
+          ),
+          menuSubItem(
+            "Seasonal Team Shottype Results",
+            tabName = "teamDashboard"
+            ,icon = icon("")
+          ),
+          
+          menuSubItem(
+            "Last Training",
+            tabName = "lastEventCoach"
+            ,icon = icon("")
+            ,selected = TRUE
           )
+          
+          
         )
       )
     })
@@ -729,19 +757,35 @@ shinyServer(function(input, output, session) {
             "Analyse",
             icon = icon("bar-chart"),
             menuSubItem(
-              "Shot results",
-              tabName = "shotAnalyse",
-              icon = icon("bar-chart")
+              "Individual Shot Results",
+              tabName = "shotAnalyse"
+              ,icon = icon("")
             ), 
             menuSubItem(
-               "IPP Dashboard",
-               tabName = "performance",
-               icon = icon("dribbble")
-             ),
+              "Monthly Individual Shot Results",
+              tabName = "performance"
+              ,icon = icon("")
+            ),
             menuSubItem(
-              "Last event",
-              tabName = "lastEventCoach",
-              icon = icon("dribbble")
+              "Individual Results Comparison",
+              tabName = "shotAnalyse1"
+              ,icon = icon("")
+            ),
+            menuSubItem(
+              "Seasonal Team Results",
+              tabName = "Teamperformance"
+              ,icon = icon("")
+            ),
+            menuSubItem(
+              "Seasonal Team Shottype Results",
+              tabName = "teamDashboard"
+              ,icon = icon("")
+            ),
+            
+            menuSubItem(
+              "Last Training",
+              tabName = "lastEventCoach"
+              ,icon = icon("")
             )
             
             
@@ -1073,7 +1117,7 @@ shinyServer(function(input, output, session) {
   
   # Players
   output$shotAnalysePlayers <- renderUI({
-
+    
     rsShotResult <- rsShotResult[rsShotResult$TeamName %in% input$shotAnalyseTeam,]
     Players <- sort(unique(rsShotResult$Fullname), FALSE)
     # Sort players by last name
@@ -1087,6 +1131,8 @@ shinyServer(function(input, output, session) {
       multiple = TRUE
     )
   })
+
+  
   
   renderAnalyses <- function(){
     # make plot
@@ -1792,6 +1838,492 @@ shinyServer(function(input, output, session) {
   output$slider <- renderUI({
     sliderInput(inputId = "B", label = "B", min = 0, max = 2*input$A, value = 5)
   })
+  
+  #################################################################
+  #gemiddelde per seizoen per positie nieuwe code
+  dta <- reactive({
+    
+    req(input$team,input$season)
+    
+    shots %>% 
+      select(TeamName,SeasonNr,Position,ShotAverage) %>% 
+      filter(TeamName %in% input$team, SeasonNr %in% input$season) %>% 
+      group_by(TeamName,Position) %>% 
+      summarise(ShotAverage = mean(ShotAverage))
+  })
+  output$pos1 <-renderPlotly({ 
+    plot_ly(data = dta(), x = ~Position, y = ~ShotAverage, type = "area", mode = 'bar' ,color = ~TeamName) %>%
+      layout(title = 'Seasonal team statistics', xaxis = list(title = "Position"),yaxis = list(title = "Average"), showlegend=TRUE) 
+  })
+  #################################################################
+  #einde code
+  
+  ######################################################################################3
+  #teamDashboard code 
+  observeEvent(c(input$position10, input$team10, input$season10 ), {
+    
+    position7 <- input$position10
+    team7 <- input$team10
+    season7 <- input$season10
+    
+    inputlist1 <- dplyr::filter(shots, grepl(team7, TeamName) & grepl(season7, SeasonNr) & grepl(position7, Position))
+    inputlist <- data.frame()
+    inputlist <- rbind(inputlist, inputlist1)
+    
+    #UPDATE SELECT INPUT
+    sealist <- data.frame()
+    sealist <- inputlist$SeasonNr
+    
+    sealist <- sort(sealist, decreasing = FALSE)
+    
+    updateSelectInput(session, "season10",
+                      choices = sealist)
+    
+    
+    teamlist <- data.frame()
+    teamlist <- inputlist$TeamName
+    
+    teamlist <- sort(teamlist, decreasing = FALSE)
+    
+    updateSelectInput(session, "team10",
+                      choices = teamlist)
+    
+    tp <- sqldf(sprintf("select Fullname,  Percentage, ShotType, ShotsMade, ShotsNumber, TrainingDate, Position ,TeamName, SeasonNr from inputlist"))
+    
+    date <- aggregate(tp[, 4:5], list(tp$TrainingDate, tp$ShotType), sum)
+    
+    date$average <- ((date$ShotsMade/date$ShotsNumber)*100)
+    
+    colnames(date) <- c("TrainingDay", "ShotType", "ShotsMade", "ShotsNumber", "Average")
+    
+    output$barblabla <- renderPlotly(
+      plot_ly( x = date$ShotType, y = date$Average, type = 'bar', color="orange") %>%
+        layout(yaxis = list(title = 'Shot average'), barmode = 'group'))
+    
+    
+    
+    #SHOT TABEL OUTPUT
+    dribbel <- sqldf(sprintf("select TrainingDay,ShotType, ShotsMade, ShotsNumber, Average from date where ShotType is 'dribble'"))
+    catch <- sqldf(sprintf("select   TrainingDay, ShotType, ShotsMade, ShotsNumber, Average from date where ShotType is 'catch_throw'"))
+    free <- sqldf(sprintf("select    TrainingDay, ShotType, ShotsMade, ShotsNumber, Average from date where ShotType is 'free_throw'"))
+    
+    output$dribbeltable <- renderTable( spacing = "m",{dribbel[,c(1,2,5)]}, width = "100%")
+    output$catchtable <- renderTable( spacing = "m",{catch[,c(1,2,5)]}, width = "100%")
+    output$freetable <- renderTable( spacing = "m",{free[,c(1,2,5)]}, width = "100%")
+    
+    
+    
+    #TOTAL INFORMATION OF TEAM
+    teamtotalshots<- sum(inputlist$ShotsNumber)
+    teamshotsmade <- sum(inputlist$ShotsMade)
+    teamshotsmissed <- teamtotalshots - teamshotsmade
+    
+    output$teamtotalshots<- renderValueBox({ valueBox( value=teamtotalshots, subtitle = paste0("Total number of shots taken by Team"), width = 2, color="blue", icon("users", class = NULL, lib = "font-awesome"))})
+    output$teamshotsmade<- renderValueBox({ valueBox( value=teamshotsmade, subtitle = paste0("Total number of scored shots by Team "), width = 2, color="green", icon("users", class = NULL, lib = "font-awesome"))})
+    output$teamshotsmissed<- renderValueBox({ valueBox( value=teamshotsmissed, subtitle = paste0("Total number of shots missed by Team"), width = 2, color="red", icon("users", class = NULL, lib = "font-awesome"))})
+    
+    
+    #TOP AND BOTTOM PLAYERS
+    topplaydf <- data.frame()
+    topplaydf <- rbind(topplaydf, tp[,c(1,2)])
+    topplaydf<- aggregate(Percentage ~ Fullname, data = inputlist, FUN = mean)
+    
+    seasonavg <- sum(date$ShotsMade) / sum(date$ShotsNumber) * 100
+    seasonavg <- round(seasonavg, digits = 1)
+    
+    
+    #ranking and odering
+    order(topplaydf$Percentage)
+    order(topplaydf$Percentage, decreasing = TRUE)
+    topplaydf <-  topplaydf[order(topplaydf$Percentage, decreasing = TRUE),]
+    topplaydf$Rank <- 1:nrow(topplaydf)
+    
+    #TOP PLAYERS
+    toplist <- sqldf(sprintf("select * from topplaydf where Percentage >= '%s'", seasonavg))
+    
+    #BOTTOM PLAYERS
+    bottomlist <- sqldf(sprintf("select * from topplaydf where Percentage < '%s'", seasonavg))
+    bottomlist <-  bottomlist[order(bottomlist$Rank, decreasing = FALSE),]
+    
+    
+    #OUTPUT
+    output$topseason<- renderTable( spacing = "m",{toplist[,c(3,1,2)]}, width = "50%")
+    output$bottomseason<- renderTable( spacing = "m",{bottomlist[,c(3,1,2)]}, width = "50%")
+  })
+  
+  ######################################################################################3
+  #einde teamDashboard code
+  
+  ######################################################################################
+  #nieuwe code team3
+  
+  # coach analysis
+  renderAnalyses1 <- function(){
+    # make plots
+    #########################################  Training results Team Plot 1  #####################################
+    output$shotAnalyse1 <- renderPlot({
+      
+      
+      if(input$typeselector31 == "free_throw"){
+        position <- 0
+      } else{
+        position <- input$sliderPosition31
+      }
+      if(input$staafOfLijnShotAnalyse31 == 1){
+        # The next lines are to locally save a pdf. We have not found a better way that works yet
+        # Now the actaul graph for output
+        barplot <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers1
+                                       &
+                                         rsShotResult$TrainingDate <= input$shotAnalyseDate1[2]
+                                       &
+                                         rsShotResult$TrainingDate >= input$shotAnalyseDate1[1]
+                                       &
+                                         rsShotResult$Position == position
+                                       & 
+                                         rsShotResult$ShotType == input$typeselector31
+                                       , ],
+                          
+                          aes(x = TrainingDateTime, #Change to TrainingDate to only show date, without time
+                              y = ShotAverage,
+                              fill = Fullname)) +
+          geom_bar(stat = "identity", position = "dodge") + scale_y_continuous(limits = c(0,100), breaks = c(0,10,20,30,40,50,60,70,80,90,100)) +
+          theme(axis.text.x = element_text(angle = 45, hjust = 1, size=15), axis.text.y = element_text(size = 15), axis.title=element_text(size=17,face="bold"), 
+                legend.title = element_text(size = 17,face="bold"), legend.text = element_text(size = 14)) + labs(fill = 'Names', x = "Date", y = "Shot Percentage")
+
+        barplot 
+        
+      }
+      
+      else {
+        rsShotResult$TrainingDate <- as.Date(rsShotResult$TrainingDate)
+        # rsShotResult$TrainingDateTime <- as.Date(rsShotResult$TrainingDateTime, format = "%Y-%m-%d %H:%M:%S")
+        # The next lines are to locally save a pdf. We have not found a better way that works yet
+        teamData <- rsShotResult[as.Date(rsShotResult$TrainingDate) <= input$shotAnalyseDate1[2]
+                                 &
+                                   as.Date(rsShotResult$TrainingDate) >= input$shotAnalyseDate1[1]
+                                 &
+                                   rsShotResult$Position == position
+                                 &
+                                   rsShotResult$ShotType == input$typeselector31
+                                 , ]
+        
+        
+        # Now the actaul graph for output
+        lineplot <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers1
+                                        &
+                                          rsShotResult$TrainingDate <= input$shotAnalyseDate1[2]
+                                        &
+                                          rsShotResult$TrainingDate >= input$shotAnalyseDate1[1]
+                                        &
+                                          rsShotResult$Position == position
+                                        & 
+                                          rsShotResult$ShotType == input$typeselector31
+                                        , ],
+                           aes(TrainingDateTime, ShotAverage, col = as.factor(Player_skey))) +
+          geom_point() +
+          geom_line(aes(group = Player_skey)) + scale_y_continuous(limits = c(0,100), breaks = c(0,10,20,30,40,50,60,70,80,90,100)) +
+          # scale_x_datetime(date_labels = "%Y-%m-%d %H:%M:%OS") +
+          stat_summary(data=teamData, fun.y="mean", geom="line", size=1, color='red') +
+          
+          xlab("TrainingDateTime") +
+          scale_colour_manual(
+            values = palette("default"),
+            name = "Players",
+            breaks = rsShotResult$Player_skey,
+            labels =rsShotResult$Fullname
+          ) +
+          theme(axis.text.x = element_text(angle = 45, hjust = 1, size=15), axis.text.y = element_text(size = 15), axis.title=element_text(size=17,face="bold"), 
+                legend.title = element_text(size = 17,face="bold"), legend.text = element_text(size = 14)) + labs(fill = 'Names', x = "Date", y = "Shot Percentage")
+        
+
+        lineplot
+        
+      }
+    }, width = "auto", height = 500)
+    
+    output$pdfButton31= downloadHandler(
+      filename = function() {paste0("Team_Report1", "_", ".pdf")},
+      content = function(file) {
+        ggsave(file, device = "pdf", width=12, height=8.5)
+      }
+    )
+    
+    
+    #########################################  Training results Team Plot 2  #####################################
+    
+    output$shotAnalyse2 <- renderPlot({
+      if(input$typeselector32 == "free_throw"){
+        position <- 0
+      } else{
+        position <- input$sliderPosition32
+      }
+      if(input$staafOfLijnShotAnalyse32 == 1){
+        # The next lines are to locally save a pdf. We have not found a better way that works yet
+        # Now the actaul graph for output
+        barplot2 <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers1
+                                        &
+                                          rsShotResult$TrainingDate <= input$shotAnalyseDate2[2]
+                                        &
+                                          rsShotResult$TrainingDate >= input$shotAnalyseDate2[1]
+                                        &
+                                          rsShotResult$Position == position
+                                        & 
+                                          rsShotResult$ShotType == input$typeselector32
+                                        , ],
+                           
+                           aes(x = TrainingDateTime,
+                               y = ShotAverage,
+                               fill = Fullname)) +
+          geom_bar(stat = "identity", position = "dodge") + scale_y_continuous(limits = c(0,100), breaks = c(0,10,20,30,40,50,60,70,80,90,100)) +
+          theme(axis.text.x = element_text(angle = 45, hjust = 1, size=15), axis.text.y = element_text(size = 15), axis.title=element_text(size=17,face="bold"), 
+                legend.title = element_text(size = 17,face="bold"), legend.text = element_text(size = 14)) + labs(fill = 'Names', x = "Date", y = "Shot Percentage")
+
+        barplot2
+        
+      }
+      
+      else {
+        rsShotResult$TrainingDate <- as.Date(rsShotResult$TrainingDate)
+        # rsShotResult$TrainingDateTime <- as.Date(rsShotResult$TrainingDateTime, format = "%Y-%m-%d %H:%M:%S")
+        # The next lines are to locally save a pdf. We have not found a better way that works yet
+        teamData <- rsShotResult[as.Date(rsShotResult$TrainingDate) <= input$shotAnalyseDate2[2]
+                                 &
+                                   as.Date(rsShotResult$TrainingDate) >= input$shotAnalyseDate2[1]
+                                 &
+                                   rsShotResult$Position == position
+                                 &
+                                   rsShotResult$ShotType == input$typeselector32
+                                 , ]
+        
+        
+        # Now the actaul graph for output
+        lineplot2 <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers1
+                                         &
+                                           rsShotResult$TrainingDate <= input$shotAnalyseDate2[2]
+                                         &
+                                           rsShotResult$TrainingDate >= input$shotAnalyseDate2[1]
+                                         &
+                                           rsShotResult$Position == position
+                                         & 
+                                           rsShotResult$ShotType == input$typeselector32
+                                         , ],
+                            aes(TrainingDateTime, ShotAverage, col = as.factor(Player_skey))) +
+          geom_point() +
+          geom_line(aes(group = Player_skey)) + scale_y_continuous(limits = c(0,100), breaks = c(0,10,20,30,40,50,60,70,80,90,100)) +
+          # scale_x_datetime(date_labels = "%Y-%m-%d %H:%M:%OS") +
+          stat_summary(data=teamData, fun.y="mean", geom="line", size=1, color='red') +
+          
+          xlab("TrainingDateTime") +
+          scale_colour_manual(
+            values = palette("default"),
+            name = "Players",
+            breaks = rsShotResult$Player_skey,
+            labels =rsShotResult$Fullname
+          ) +
+          theme(axis.text.x = element_text(angle = 45, hjust = 1, size=15), axis.text.y = element_text(size = 15), axis.title=element_text(size=17,face="bold"), 
+                legend.title = element_text(size = 17,face="bold"), legend.text = element_text(size = 14)) + labs(fill = 'Names', x = "Date", y = "Shot Percentage")
+        
+       
+        lineplot2
+      }
+    }, width = "auto", height = 500)
+    
+  
+    output$pdfButton32= downloadHandler(
+      filename = function() {paste0("Team_Report2", "_", ".pdf")},
+      content = function(file) {
+        ggsave(file, device = "pdf", width=12, height=8.5)
+      }
+    )
+    
+    
+    
+    
+    
+    #########################################  Training results Individual Player Plot 1  #####################################   
+    # make plot
+    
+    output$shotAnalyse3 <- renderPlot({
+      if(input$typeselector31 == "free_throw"){
+        position <- 0
+      } else{
+        position <- input$sliderPosition31
+      }
+      if(input$staafOfLijnShotAnalyse33 == 1){
+        # The next lines are to locally save a pdf. We have not found a better way that works yet
+        # Now the actaul graph for output
+        barplot3 <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers1
+                                        &
+                                          rsShotResult$TrainingDate <= input$shotAnalyseDate1[2]
+                                        &
+                                          rsShotResult$TrainingDate >= input$shotAnalyseDate1[1]
+                                        &
+                                          rsShotResult$Position == position
+                                        & 
+                                          rsShotResult$ShotType == input$typeselector31
+                                        , ],
+                           
+                           aes(x = TrainingDate,
+                               y = ShotAverage,
+                               fill = Fullname)) +
+          geom_bar(stat = "identity", position = "dodge") + scale_y_continuous(limits = c(0,100), breaks = c(0,10,20,30,40,50,60,70,80,90,100)) +
+          theme(axis.text.x = element_text(angle = 45, hjust = 1, size=15), axis.text.y = element_text(size = 15), axis.title=element_text(size=17,face="bold"), 
+                legend.title = element_text(size = 17,face="bold"), legend.position="top", legend.text = element_text(size = 14)) + labs(fill = 'Name', x = "Date", y = "Shot Percentage")
+        
+
+        barplot3
+        
+      }
+      
+      else {
+        #rsShotResult$TrainingDate <- as.Date(rsShotResult$TrainingDate)
+        #rsShotResult$TrainingDateTime <- as.Date(rsShotResult$TrainingDateTime, format = "%Y-%m-%d %H:%M:%S")
+        
+        
+        # The next lines are to locally save a pdf. We have not found a better way that works yet
+        teamData <- rsShotResult[as.Date(rsShotResult$TrainingDate) <= input$shotAnalyseDate1[2]
+                                 &
+                                   as.Date(rsShotResult$TrainingDate) >= input$shotAnalyseDate1[1]
+                                 &
+                                   rsShotResult$Position == position
+                                 &
+                                   rsShotResult$ShotType == input$typeselector31
+                                 , ]
+        
+        
+        # Now the actaul graph for output
+        lineplot3 <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers1
+                                         &
+                                           rsShotResult$TrainingDate <= input$shotAnalyseDate1[2]
+                                         &
+                                           rsShotResult$TrainingDate >= input$shotAnalyseDate1[1]
+                                         &
+                                           rsShotResult$Position == position
+                                         & 
+                                           rsShotResult$ShotType == input$typeselector31
+                                         , ],
+                            aes(TrainingDate, ShotAverage, col = as.factor(Player_skey))) +
+          geom_point() +
+          geom_line(aes(group = Player_skey)) + scale_y_continuous(limits = c(0,100), breaks = c(0,10,20,30,40,50,60,70,80,90,100)) +
+          # scale_x_datetime(date_labels = "%Y-%m-%d %H:%M:%OS") +
+          stat_summary(data=teamData, fun.y="mean", geom="line", size=1, color='red') +
+          
+          xlab("TrainingDateTime") +
+          scale_colour_manual(
+            values = palette("default"),
+            name = "Player",
+            breaks = rsShotResult$Player_skey,
+            labels =rsShotResult$Fullname
+          ) +
+          theme(axis.text.x = element_text(angle = 45, hjust = 1, size=15), axis.text.y = element_text(size = 15), axis.title=element_text(size=17,face="bold"), 
+                legend.title = element_text(size = 17,face="bold"), legend.position="top", legend.text = element_text(size = 14)) + labs(fill = 'Name', x = "Date", y = "Shot Percentage")
+        
+
+        lineplot3
+      }
+    }, width = "auto", height = 500)
+    
+
+    output$pdfButton33= downloadHandler(
+      filename = function() {paste0("player_report1", "_", ".pdf")},
+      content = function(file) {
+        ggsave(file, device = "pdf", width=12, height=8.5)
+      }
+    )
+    
+    
+    #########################################  Training results Individual Player Plot 2  #####################################
+    
+    output$shotAnalyse4 <- renderPlot({
+      if(input$typeselector32 == "free_throw"){
+        position <- 0
+      } else{
+        position <- input$sliderPosition32
+      }
+      if(input$staafOfLijnShotAnalyse34 == 1){
+        # The next lines are to locally save a pdf. We have not found a better way that works yet
+        # Now the actaul graph for output
+        barplot4 <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers1
+                                        &
+                                          rsShotResult$TrainingDate <= input$shotAnalyseDate2[2]
+                                        &
+                                          rsShotResult$TrainingDate >= input$shotAnalyseDate2[1]
+                                        &
+                                          rsShotResult$Position == position
+                                        & 
+                                          rsShotResult$ShotType == input$typeselector32
+                                        , ],
+                           
+                           aes(x = TrainingDate,
+                               y = ShotAverage,
+                               fill = Fullname)) +
+          geom_bar(stat = "identity", position = "dodge") + scale_y_continuous(limits = c(0,100), breaks = c(0,10,20,30,40,50,60,70,80,90,100)) +
+          theme(axis.text.x = element_text(angle = 45, hjust = 1, size=15), axis.text.y = element_text(size = 15), axis.title=element_text(size=17,face="bold"), 
+                legend.title = element_text(size = 17,face="bold"), legend.position="top", legend.text = element_text(size = 14)) + labs(fill = 'Name', x = "Date", y = "Shot Percentage")
+        
+
+        barplot4
+        
+      }
+      
+      else {
+        # rsShotResult$TrainingDate <- as.Date(rsShotResult$TrainingDate)
+        # rsShotResult$TrainingDateTime <- as.Date(rsShotResult$TrainingDateTime, format = "%Y-%m-%d %H:%M:%S")
+        # The next lines are to locally save a pdf. We have not found a better way that works yet
+        teamData <- rsShotResult[as.Date(rsShotResult$TrainingDate) <= input$shotAnalyseDate2[2]
+                                 &
+                                   as.Date(rsShotResult$TrainingDate) >= input$shotAnalyseDate2[1]
+                                 &
+                                   rsShotResult$Position == position
+                                 &
+                                   rsShotResult$ShotType == input$typeselector32
+                                 , ]
+        
+        
+        # Now the actaul graph for output
+        lineplot4 <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers1
+                                         &
+                                           rsShotResult$TrainingDate <= input$shotAnalyseDate2[2]
+                                         &
+                                           rsShotResult$TrainingDate >= input$shotAnalyseDate2[1]
+                                         &
+                                           rsShotResult$Position == position
+                                         & 
+                                           rsShotResult$ShotType == input$typeselector32
+                                         , ],
+                            aes(TrainingDate, ShotAverage, col = as.factor(Player_skey))) +
+          geom_point() +
+          geom_line(aes(group = Player_skey)) + scale_y_continuous(limits = c(0,100), breaks = c(0,10,20,30,40,50,60,70,80,90,100)) +
+          # scale_x_datetime(date_labels = "%Y-%m-%d %H:%M:%OS") +
+          stat_summary(data=teamData, fun.y="mean", geom="line", size=1, color='red') +
+          
+          xlab("TrainingDateTime") +
+          scale_colour_manual(
+            values = palette("default"),
+            name = "Player",
+            breaks = rsShotResult$Player_skey,
+            labels =rsShotResult$Fullname
+          ) +
+          theme(axis.text.x = element_text(angle = 45, hjust = 1, size=15), axis.text.y = element_text(size = 15), axis.title=element_text(size=17,face="bold"), 
+                legend.title = element_text(size = 17,face="bold"), legend.position="top", legend.text = element_text(size = 14)) + labs(fill = 'Name', x = "Date", y = "Shot Percentage")
+
+        lineplot4
+      }
+    }, width = "auto", height = 500)    
+    
+    output$pdfButton34= downloadHandler(
+      filename = function() {paste0("Player_Report2", "_", ".pdf")},
+      content = function(file) {
+        ggsave(file, device = "pdf", width=12, height=8.5)
+      }
+    )
+    
+    
+    
+  }
+  
+  #######################################################################################
+  #einde code team3
   
   
 
