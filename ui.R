@@ -337,7 +337,7 @@ dashboardUI <<- fluidPage(
                   ),
 
                   fluidRow(
-                    column(width = 6,
+                    column(width = 12,
                            align = "center",
                            box(width = NULL, status = "primary", solidHeader = TRUE, collapsible = TRUE,
                                title = (span(tagList(icon("table")), "Training statistics")),
@@ -347,8 +347,10 @@ dashboardUI <<- fluidPage(
                                tableOutput('playertable'),
                                downloadLink("downloadCsv", "Export to CSV")
                            )
-                    ),
-                    column (width = 6,
+                    )
+                  ),
+                  fluidRow(
+                    column (width = 12,
                             box(width = NULL, status="primary", solidHeader = TRUE, collapsible = TRUE,
                                 title=(span(tagList(icon("info-circle")), "Monthly facts")),
                                 align="center",
@@ -426,7 +428,7 @@ dashboardUI <<- fluidPage(
                        ,
                        
                        h4(span(tagList(icon("filter")), "Select season")),
-                       selectizeInput('season', "", choices =  shots$SeasonNr %>% unique(),selected = TRUE,  multiple = FALSE),
+                       selectizeInput('season', "", choices =  shots$SeasonText %>% unique(),selected = TRUE,  multiple = TRUE),
                        br()
               )),
             
@@ -723,6 +725,64 @@ dashboardUI <<- fluidPage(
                     
                   )),
           
+          tabItem(
+            tabName = "heatmap",
+            fluidRow(
+              #input and filter options for the graph
+              box(
+                width = 12,
+                
+                selectizeInput(
+                  "heatmapplayers",
+                  "Players",
+                  c(allPlayers$full),
+                  selected = allPlayers[1, "Playername"],
+                  multiple = TRUE
+                ),
+                
+                #type of shot
+                radioGroupButtons(inputId = "typeselector33",
+                                  label = "Type",
+                                  status = "danger",
+                                  choices = setNames(c("free_throw","catch_throw","dribble"),c("Free throw","Catch & Shoot", "From dribble")),
+                                  selected = "catch_throw"),
+                box(
+                  width = 6,
+                  dateRangeInput(
+                    'shotAnalyseDate31',
+                    label = HTML("Periode 1 </br> Date range input: yyyy-mm-dd"),
+                    start = "2017-03-12",
+                    end = format(Sys.Date(), format = "%Y-%m-%d")
+                  )
+                ),
+                
+                box(
+                  width = 6,
+                  
+                  dateRangeInput(
+                    'shotAnalyseDate32',
+                    label = HTML("Periode 2 </br> Date range input: yyyy-mm-dd"),
+                    start = "2017-03-12",
+                    end = format(Sys.Date(), format = "%Y-%m-%d")
+                  )
+                ),
+                
+                
+                box(width = 6,
+                    plotOutput("heatmap"),
+                    downloadButton("pdfButton35", "Export to PDF", style = "float:right")
+                ),
+                
+                box(width = 6,
+                    plotOutput("heatmap2"),
+                    downloadButton("pdfButton36", "Export to PDF 2", style = "float:right")
+                )
+                
+              )
+              
+              
+            )
+          ),
           ########################################################################
           #einde code team 3
           

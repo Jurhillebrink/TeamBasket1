@@ -20,6 +20,7 @@ library(mailR)
 library(plotly)
 library(tidyr)
 library(dplyr)
+library(png)
 
 require("DT")
 
@@ -580,6 +581,11 @@ shinyServer(function(input, output, session) {
             ,icon = icon("")
           ),
           menuSubItem(
+            "Individual Heatmap",
+            tabName = "heatmap"
+            ,icon = icon("")
+          ),
+          menuSubItem(
             "Individual Results Comparison",
             tabName = "shotAnalyse1"
             ,icon = icon("")
@@ -768,6 +774,11 @@ shinyServer(function(input, output, session) {
             menuSubItem(
               "Monthly Individual Shot Results",
               tabName = "performance"
+              ,icon = icon("")
+            ),
+            menuSubItem(
+              "Individual Heatmap",
+              tabName = "heatmap"
               ,icon = icon("")
             ),
             menuSubItem(
@@ -1121,8 +1132,7 @@ shinyServer(function(input, output, session) {
   
   # Players
   output$shotAnalysePlayers <- renderUI({
-    
-    rsShotResult <- rsShotResult[rsShotResult$TeamName %in% input$shotAnalyseTeam,]
+    rsShotResult <- rsShotResult[rsShotResult$TeamName %in% input$shotAnalyseTeam & rsShotResult$SeasonText %in% input$shotAnalyseSeason,]
     Players <- sort(unique(rsShotResult$Fullname), FALSE)
     # Sort players by last name
     Players <- data.frame(Players) %>%
@@ -1846,17 +1856,18 @@ shinyServer(function(input, output, session) {
   #gemiddelde per seizoen per positie nieuwe code
   dta <- reactive({
     
-    req(input$team,input$season)
+    req(input$season,input$team)
     
     shots %>% 
-      select(TeamName,SeasonNr,Position,ShotAverage) %>% 
-      filter(TeamName %in% input$team, SeasonNr %in% input$season) %>% 
-      group_by(TeamName,Position) %>% 
+      select(SeasonText,TeamName,Position,ShotAverage) %>% 
+      filter(SeasonText %in% input$season,TeamName %in% input$team) %>% 
+      group_by(SeasonText,Position,TeamName) %>%
       summarise(ShotAverage = mean(ShotAverage))
   })
   output$pos1 <-renderPlotly({ 
-    plot_ly(data = dta(), x = ~Position, y = ~ShotAverage, type = "area", mode = 'bar' ,color = ~TeamName) %>%
-      layout(title = 'Seasonal team statistics', xaxis = list(title = "Position"),yaxis = list(title = "Average"), showlegend=TRUE) 
+    plot_ly(data = dta(), x = ~Position, y = ~ShotAverage, type = "area", color = ~SeasonText) %>%
+      layout(title = 'Seasonal team statistics', xaxis = list(title = "Position"),yaxis = list(title = "Average"), showlegend=TRUE)
+    
   })
   #################################################################
   #einde code
@@ -1967,6 +1978,9 @@ shinyServer(function(input, output, session) {
     output$shotAnalyse1 <- renderPlot({
       
       
+      
+      
+      
       if(input$typeselector31 == "free_throw"){
         position <- 0
       } else{
@@ -1975,6 +1989,13 @@ shinyServer(function(input, output, session) {
       if(input$staafOfLijnShotAnalyse31 == 1){
         # The next lines are to locally save a pdf. We have not found a better way that works yet
         # Now the actaul graph for output
+        output$pdfButton31= downloadHandler(
+          filename = function() {paste0("Team_Report1_Bargraph", "_", ".pdf")},
+          content = function(file) {
+            ggsave(file, plot = barplot, device = "pdf", width=20, height=8.5)
+          }
+        )        
+        
         barplot <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers1
                                        &
                                          rsShotResult$TrainingDate <= input$shotAnalyseDate1[2]
@@ -1992,7 +2013,8 @@ shinyServer(function(input, output, session) {
           geom_bar(stat = "identity", position = "dodge") + scale_y_continuous(limits = c(0,100), breaks = c(0,10,20,30,40,50,60,70,80,90,100)) +
           theme(axis.text.x = element_text(angle = 45, hjust = 1, size=15), axis.text.y = element_text(size = 15), axis.title=element_text(size=17,face="bold"), 
                 legend.title = element_text(size = 17,face="bold"), legend.text = element_text(size = 14)) + labs(fill = 'Names', x = "Date", y = "Shot Percentage")
-
+        
+        
         barplot 
         
       }
@@ -2012,6 +2034,13 @@ shinyServer(function(input, output, session) {
         
         
         # Now the actaul graph for output
+        output$pdfButton31= downloadHandler(
+          filename = function() {paste0("Team_Report1_Linegraph", "_", ".pdf")},
+          content = function(file) {
+            ggsave(file, plot = lineplot, device = "pdf", width=20, height=8.5)
+          }
+        )
+        
         lineplot <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers1
                                         &
                                           rsShotResult$TrainingDate <= input$shotAnalyseDate1[2]
@@ -2038,18 +2067,14 @@ shinyServer(function(input, output, session) {
           theme(axis.text.x = element_text(angle = 45, hjust = 1, size=15), axis.text.y = element_text(size = 15), axis.title=element_text(size=17,face="bold"), 
                 legend.title = element_text(size = 17,face="bold"), legend.text = element_text(size = 14)) + labs(fill = 'Names', x = "Date", y = "Shot Percentage")
         
-
+        
+        
         lineplot
         
       }
     }, width = "auto", height = 500)
     
-    output$pdfButton31= downloadHandler(
-      filename = function() {paste0("Team_Report1", "_", ".pdf")},
-      content = function(file) {
-        ggsave(file, device = "pdf", width=12, height=8.5)
-      }
-    )
+    
     
     
     #########################################  Training results Team Plot 2  #####################################
@@ -2063,6 +2088,14 @@ shinyServer(function(input, output, session) {
       if(input$staafOfLijnShotAnalyse32 == 1){
         # The next lines are to locally save a pdf. We have not found a better way that works yet
         # Now the actaul graph for output
+        
+        output$pdfButton32= downloadHandler(
+          filename = function() {paste0("Team_Report2_Bargraph", "_", ".pdf")},
+          content = function(file) {
+            ggsave(file, plot = barplot2, device = "pdf", width=20, height=8.5)
+          }
+        )
+        
         barplot2 <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers1
                                         &
                                           rsShotResult$TrainingDate <= input$shotAnalyseDate2[2]
@@ -2080,7 +2113,8 @@ shinyServer(function(input, output, session) {
           geom_bar(stat = "identity", position = "dodge") + scale_y_continuous(limits = c(0,100), breaks = c(0,10,20,30,40,50,60,70,80,90,100)) +
           theme(axis.text.x = element_text(angle = 45, hjust = 1, size=15), axis.text.y = element_text(size = 15), axis.title=element_text(size=17,face="bold"), 
                 legend.title = element_text(size = 17,face="bold"), legend.text = element_text(size = 14)) + labs(fill = 'Names', x = "Date", y = "Shot Percentage")
-
+        
+        
         barplot2
         
       }
@@ -2100,6 +2134,14 @@ shinyServer(function(input, output, session) {
         
         
         # Now the actaul graph for output
+        
+        output$pdfButton32= downloadHandler(
+          filename = function() {paste0("Team_Report2_Linegraph", "_", ".pdf")},
+          content = function(file) {
+            ggsave(file, plot = lineplot2, device = "pdf", width=20, height=8.5)
+          }
+        )
+        
         lineplot2 <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers1
                                          &
                                            rsShotResult$TrainingDate <= input$shotAnalyseDate2[2]
@@ -2126,21 +2168,10 @@ shinyServer(function(input, output, session) {
           theme(axis.text.x = element_text(angle = 45, hjust = 1, size=15), axis.text.y = element_text(size = 15), axis.title=element_text(size=17,face="bold"), 
                 legend.title = element_text(size = 17,face="bold"), legend.text = element_text(size = 14)) + labs(fill = 'Names', x = "Date", y = "Shot Percentage")
         
-       
+        
         lineplot2
       }
     }, width = "auto", height = 500)
-    
-  
-    output$pdfButton32= downloadHandler(
-      filename = function() {paste0("Team_Report2", "_", ".pdf")},
-      content = function(file) {
-        ggsave(file, device = "pdf", width=12, height=8.5)
-      }
-    )
-    
-    
-    
     
     
     #########################################  Training results Individual Player Plot 1  #####################################   
@@ -2155,6 +2186,13 @@ shinyServer(function(input, output, session) {
       if(input$staafOfLijnShotAnalyse33 == 1){
         # The next lines are to locally save a pdf. We have not found a better way that works yet
         # Now the actaul graph for output
+        output$pdfButton33= downloadHandler(
+          filename = function() {paste0("Player_Report1_Bargraph", "_", ".pdf")},
+          content = function(file) {
+            ggsave(file, plot = barplot3, device = "pdf", width=20, height=8.5)
+          }
+        )
+        
         barplot3 <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers1
                                         &
                                           rsShotResult$TrainingDate <= input$shotAnalyseDate1[2]
@@ -2173,7 +2211,7 @@ shinyServer(function(input, output, session) {
           theme(axis.text.x = element_text(angle = 45, hjust = 1, size=15), axis.text.y = element_text(size = 15), axis.title=element_text(size=17,face="bold"), 
                 legend.title = element_text(size = 17,face="bold"), legend.position="top", legend.text = element_text(size = 14)) + labs(fill = 'Name', x = "Date", y = "Shot Percentage")
         
-
+        
         barplot3
         
       }
@@ -2195,6 +2233,13 @@ shinyServer(function(input, output, session) {
         
         
         # Now the actaul graph for output
+        output$pdfButton33= downloadHandler(
+          filename = function() {paste0("Player_Report1_Linegraph", "_", ".pdf")},
+          content = function(file) {
+            ggsave(file, plot = lineplot3, device = "pdf", width=20, height=8.5)
+          }
+        )
+        
         lineplot3 <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers1
                                          &
                                            rsShotResult$TrainingDate <= input$shotAnalyseDate1[2]
@@ -2221,18 +2266,10 @@ shinyServer(function(input, output, session) {
           theme(axis.text.x = element_text(angle = 45, hjust = 1, size=15), axis.text.y = element_text(size = 15), axis.title=element_text(size=17,face="bold"), 
                 legend.title = element_text(size = 17,face="bold"), legend.position="top", legend.text = element_text(size = 14)) + labs(fill = 'Name', x = "Date", y = "Shot Percentage")
         
-
+        
         lineplot3
       }
     }, width = "auto", height = 500)
-    
-
-    output$pdfButton33= downloadHandler(
-      filename = function() {paste0("player_report1", "_", ".pdf")},
-      content = function(file) {
-        ggsave(file, device = "pdf", width=12, height=8.5)
-      }
-    )
     
     
     #########################################  Training results Individual Player Plot 2  #####################################
@@ -2246,6 +2283,13 @@ shinyServer(function(input, output, session) {
       if(input$staafOfLijnShotAnalyse34 == 1){
         # The next lines are to locally save a pdf. We have not found a better way that works yet
         # Now the actaul graph for output
+        output$pdfButton34= downloadHandler(
+          filename = function() {paste0("Player_Report2_Bargraph", "_", ".pdf")},
+          content = function(file) {
+            ggsave(file, plot = barplot4, device = "pdf", width=12, height=8.5)
+          }
+        )
+        
         barplot4 <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers1
                                         &
                                           rsShotResult$TrainingDate <= input$shotAnalyseDate2[2]
@@ -2264,7 +2308,7 @@ shinyServer(function(input, output, session) {
           theme(axis.text.x = element_text(angle = 45, hjust = 1, size=15), axis.text.y = element_text(size = 15), axis.title=element_text(size=17,face="bold"), 
                 legend.title = element_text(size = 17,face="bold"), legend.position="top", legend.text = element_text(size = 14)) + labs(fill = 'Name', x = "Date", y = "Shot Percentage")
         
-
+        
         barplot4
         
       }
@@ -2284,6 +2328,13 @@ shinyServer(function(input, output, session) {
         
         
         # Now the actaul graph for output
+        output$pdfButton34= downloadHandler(
+          filename = function() {paste0("Player_Report2_Linegraph", "_", ".pdf")},
+          content = function(file) {
+            ggsave(file, plot = lineplot4, device = "pdf", width=12, height=8.5)
+          }
+        )
+        
         lineplot4 <- ggplot(rsShotResult[rsShotResult$Fullname %in% input$shotAnalysePlayers1
                                          &
                                            rsShotResult$TrainingDate <= input$shotAnalyseDate2[2]
@@ -2309,21 +2360,76 @@ shinyServer(function(input, output, session) {
           ) +
           theme(axis.text.x = element_text(angle = 45, hjust = 1, size=15), axis.text.y = element_text(size = 15), axis.title=element_text(size=17,face="bold"), 
                 legend.title = element_text(size = 17,face="bold"), legend.position="top", legend.text = element_text(size = 14)) + labs(fill = 'Name', x = "Date", y = "Shot Percentage")
-
+        
+        
         lineplot4
       }
     }, width = "auto", height = 500)    
     
-    output$pdfButton34= downloadHandler(
-      filename = function() {paste0("Player_Report2", "_", ".pdf")},
-      content = function(file) {
-        ggsave(file, device = "pdf", width=12, height=8.5)
-      }
-    )
-    
     
     
   }
+  
+  output$heatmap <- renderPlot({
+    if (!is.null(input$heatmapplayers)) {
+      
+      output$pdfButton35 = downloadHandler(
+        filename = function() {paste0("Heatmap", "_", ".pdf")},
+        content = function(file) {
+          ggsave(file, plot = heatmap_plot, device = "pdf", width=20, height=8.5)
+        }
+      )
+      
+      HEATMAPTEST = rsShotResult %>%
+        select(Fullname, Training_ID, ShotType, ShotsMade, ShotsNumber, ShotAverage, Position, TrainingDate) %>%
+        filter(ShotType == input$typeselector33, Fullname %in% input$heatmapplayers, TrainingDate <= input$shotAnalyseDate31[2]
+               &
+                 rsShotResult$TrainingDate >= input$shotAnalyseDate31[1])
+      
+      heatmap_plot <- ggplot(HEATMAPTEST, aes(HEATMAPTEST$Position, HEATMAPTEST$Fullname)) + 
+        geom_tile(aes(fill = HEATMAPTEST$ShotAverage), colour = "white")+
+        scale_fill_gradient(low = "yellow", high = "red", limits=c(0, 100))+
+        scale_x_continuous(breaks = round(seq.int(min(HEATMAPTEST$Position), max(HEATMAPTEST$Position), length.out = 16))) +
+        theme(axis.ticks = element_blank(), 
+              axis.text.x = element_text(
+                angle = 330, hjust = 0),
+              axis.title = element_blank(),
+              legend.title = element_blank()
+              
+        )
+      heatmap_plot
+    }
+  })
+  
+  output$heatmap2 <- renderPlot({
+    if (!is.null(input$heatmapplayers)) {
+      
+      output$pdfButton36 = downloadHandler(
+        filename = function() {paste0("Heatmap2", "_", ".pdf")},
+        content = function(file) {
+          ggsave(file, plot = heatmap_plot2, device = "pdf", width=20, height=8.5)
+        }
+      )
+      
+      HEATMAPTEST = rsShotResult %>%
+        select(Fullname, Training_ID, ShotType, ShotsMade, ShotsNumber, ShotAverage, Position, TrainingDate) %>%
+        filter(ShotType == input$typeselector33, Fullname %in% input$heatmapplayers, TrainingDate <= input$shotAnalyseDate32[2]
+               &
+                 rsShotResult$TrainingDate >= input$shotAnalyseDate32[1])
+      heatmap_plot2 <- ggplot(HEATMAPTEST, aes(HEATMAPTEST$Position, HEATMAPTEST$Fullname)) + 
+        geom_tile(aes(fill = HEATMAPTEST$ShotAverage), colour = "white")+
+        scale_fill_gradient(low = "yellow", high = "red", limits=c(0, 100))+
+        scale_x_continuous(breaks = round(seq.int(min(HEATMAPTEST$Position), max(HEATMAPTEST$Position), length.out = 16))) +
+        theme(axis.ticks = element_blank(), 
+              axis.text.x = element_text(
+                angle = 330, hjust = 0),
+              axis.title = element_blank(),
+              legend.title = element_blank()
+              
+        )
+      heatmap_plot2
+    }
+  }) 
   
   #######################################################################################
   #einde code team3

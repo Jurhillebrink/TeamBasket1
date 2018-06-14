@@ -252,6 +252,19 @@ $(document).ready(function() {
         }, 250);
     })
 
+    $("#typeselector33").click(function(){
+      //alert($("#typeselector:checked").val());
+      setTimeout(function() {
+        if($('input[name=typeselector33]:checked').val() == "free_throw"){
+           $('#fieldImage33').css("opacity", 1);
+           //$("option:selected").removeAttr("selected");
+        }else{
+          $('#fieldImage33').css("opacity", 0.2);
+          //$("option:selected").removeAttr("selected");
+        }
+      }, 250);
+    })
+
 
 });
 
